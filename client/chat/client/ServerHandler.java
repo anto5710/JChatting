@@ -44,18 +44,22 @@ public class ServerHandler implements Runnable{
 				String type = dis.readUTF();
 				switch (type) {
 				case "MSG":
-					String msg = convertMessage(dis.readUTF());
+					int sz = dis.readInt();
+					String msg = dis.readUTF();
+					String converted = convertMessage(msg);
+					System.out.println("@"+msg);
 					ChatFrame.INSTANCE.printMessage(msg);
 					break;
 				case "CHATTER_LIST" :
+					// [CHATTER_LIST] AA,BB,CC
 					List<String> chatterList = new ArrayList<>();
 					int size = dis.readInt();
+					
 					for(int cnt = 0; cnt < size; cnt++){
 						chatterList.add(dis.readUTF());
 					}
 					
 					ChatFrame.INSTANCE.updateChatterList(chatterList);
-					
 					break;
 				default:
 					break;
@@ -84,6 +88,15 @@ public class ServerHandler implements Runnable{
 		return String.format("%s: %s\n", sender, msg); 
 	}
 	
+	public void sendData(String cmd, String data){
+		try {
+			dos.writeUTF(cmd);
+			dos.writeUTF(data);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public void sendNickName(String nickNam) {
 		// Lock
 		while ( ! running ) {
@@ -94,14 +107,21 @@ public class ServerHandler implements Runnable{
 				e.printStackTrace();
 			}
 		}
-		sendMessage(nickNam);
+		sendData("LOGIN", nickNam);
 	}
 
 	public void sendMessage(String msg) {
-		try {
-			dos.writeUTF( msg );
-		} catch (IOException e) {
-			e.printStackTrace();
+		sendData("MSG", msg);
+	}
+	
+	/*
+	public void sendMessageTo ( String msg, List<String> nicknames ) {
+		// "MSG_PARTIAL"   "xxdslsadkfj;asdlkfjsda;lfkjd;lkdj" 3 "AA"  "BB" "xx"
+		dos.writeUTF("MSG_PARTIAL");
+		dos.writeUTF( msg );
+		for (String receiver : nicknames) {
+			dos.writeUTF(receiver);
 		}
 	}
+	*/
 }

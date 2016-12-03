@@ -28,11 +28,11 @@ public class ChatClient {
 		return IP;
 	}
 
-	public int getPORT() {
+	public int getPort() {
 		return PORT;
 	}
 
-	public String getNICKNAME() {
+	public String getNickname() {
 		return NICKNAME;
 	}
 

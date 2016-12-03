@@ -78,9 +78,9 @@ public class ServerHandler implements Runnable{
 		int l = input.indexOf(":");
 		if(l==-1) return null; // can't find regex
 		
-		int lenght = input.length();
+		int length = input.length();
 		String sender = input.substring(0, l);
-		String msg = l<lenght-1? input.substring(l+1, lenght-1):"";
+		String msg = input.substring(l+1, length);
 		return String.format("%s: %s\n", sender, msg); 
 	}
 	

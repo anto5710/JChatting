@@ -32,7 +32,7 @@ public class LoginDialog extends JDialog {
 	private JTextField portField;
 	private JTextField nicknameField;
 	
-	private ChatClient client;
+	public static ChatClient client;
 	private JTextArea errorArea;
 
 	/**

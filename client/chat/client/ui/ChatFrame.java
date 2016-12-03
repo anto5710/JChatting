@@ -16,10 +16,12 @@ import javax.swing.JPanel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 
+import chat.server.ChatMain;
+
 public class ChatFrame {
 
 	private JFrame frame;
-	private JList chatterList;
+	private JList<String> chatterList;
 	private DefaultListModel<String> chatterModel = new DefaultListModel<>();
 	/**
 	 * 여기저기서 참조하는 인스턴스를 매번 생성자나 메소드로 전달하기 귀찮으면
@@ -31,6 +33,8 @@ public class ChatFrame {
 	 * Observer Pattern을 이용해야 하지만 아직은 배우지 않았으므로 일단은 전역변수(Singleton)으로 복잡도를 낮춰줍니다.
 	 */
 	public static ChatFrame INSTANCE;
+	private JTextArea inputArea;
+	private JTextArea chatArea;
 
 	/**
 	 * Launch the application.
@@ -76,29 +80,32 @@ public class ChatFrame {
 		splitPane_1.setOrientation(JSplitPane.VERTICAL_SPLIT);
 		splitPane.setRightComponent(splitPane_1);
 		
-		JScrollPane scrollPane_1 = new JScrollPane();
-		splitPane_1.setLeftComponent(scrollPane_1);
+		JScrollPane chatScroll = new JScrollPane();
+		splitPane_1.setLeftComponent(chatScroll);
 		
-		JTextArea chatArea = new JTextArea();
-		scrollPane_1.setViewportView(chatArea);
+		chatArea = new JTextArea();
+		chatScroll.setViewportView(chatArea);
 		
 		JPanel panel = new JPanel();
 		splitPane_1.setRightComponent(panel);
 		panel.setLayout(new BorderLayout(0, 0));
 		
-		JScrollPane scrollPane_2 = new JScrollPane();
-		panel.add(scrollPane_2, BorderLayout.CENTER);
+		JScrollPane inputScroll = new JScrollPane();
+		panel.add(inputScroll, BorderLayout.CENTER);
 		
-		JTextArea inputArea = new JTextArea();
-		scrollPane_2.setViewportView(inputArea);
+		inputArea = new JTextArea();
+		inputScroll.setViewportView(inputArea);
 		
-		JButton btnNewButton = new JButton("SEND");
-		panel.add(btnNewButton, BorderLayout.EAST);
+		JButton sendBtn = new JButton("SEND");
+		sendBtn.addActionListener((e)->{
+			if(!inputArea.getText().isEmpty()) sendText();
+		});
+		panel.add(sendBtn, BorderLayout.EAST);
 		
 		JScrollPane scrollPane = new JScrollPane();
 		splitPane.setLeftComponent(scrollPane);
 		
-		chatterList = new JList( chatterModel );
+		chatterList = new JList<>( chatterModel );
 		scrollPane.setViewportView(chatterList);
 		
 		JPanel panel_1 = new JPanel();
@@ -109,13 +116,21 @@ public class ChatFrame {
 		panel_1.add(lblStatus, BorderLayout.NORTH);
 	}
 	
+	private void sendText(){
+		String text = inputArea.getText();
+		LoginDialog.client.sendMessage(text);
+		inputArea.setText("");
+	}
+	
+	public void printMessage(String msg){
+		chatArea.append(msg);
+	}
+	
 	public void updateChatterList( List<String> chatters ){
-//		DefaultListModel<String> model = (DefaultListModel<String>) chatterList.getModel() ;
 		chatterModel.clear();
 		for ( String chatter : chatters ) {
 			chatterModel.addElement(chatter);
 		}
-		
 	}
 
 }

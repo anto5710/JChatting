@@ -18,9 +18,6 @@ public class ChatClient {
 		Socket sock = new Socket(IP, port);
 		// 이 시점에 연결이 잘 된것입니다.
 		handler = new ServerHandler(sock);
-		/*
-		handler.sendNickName (nickName);
-		*/
 	}
 	
 	public ServerHandler getServerHandler() {

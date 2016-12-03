@@ -44,11 +44,9 @@ public class ServerHandler implements Runnable{
 				String type = dis.readUTF();
 				switch (type) {
 				case "MSG":
-					
 					String msg = convertMessage(dis.readUTF());
-					printMessage(msg);
+					ChatFrame.INSTANCE.printMessage(msg);
 					break;
-					
 				case "CHATTER_LIST" :
 					List<String> chatterList = new ArrayList<>();
 					int size = dis.readInt();
@@ -86,10 +84,6 @@ public class ServerHandler implements Runnable{
 		return String.format("%s: %s\n", sender, msg); 
 	}
 	
-	protected void printMessage(String input) {
-		System.out.println(input);
-	}
-
 	public void sendNickName(String nickNam) {
 		// Lock
 		while ( ! running ) {

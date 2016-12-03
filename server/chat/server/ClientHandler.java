@@ -72,6 +72,7 @@ public class ClientHandler implements Runnable {
 	
 	public void sendMessage (String sender, String msg ) {
 		try {
+			dos.writeUTF("MSG");
 			dos.writeUTF( sender + ":" + msg);
 		} catch (IOException e) {
 			e.printStackTrace();

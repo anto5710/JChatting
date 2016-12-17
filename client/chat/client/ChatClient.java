@@ -41,6 +41,10 @@ public class ChatClient {
 	}
 
 	public void sendNickname() {
-		handler.sendNickName(NICKNAME);
+		handler.sendLogin(NICKNAME);
+	}
+
+	public void sendLogout() {
+		handler.sendData("LOGOUT", "");
 	}
 }

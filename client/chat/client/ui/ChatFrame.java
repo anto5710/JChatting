@@ -16,7 +16,10 @@ import javax.swing.JPanel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 
+import chat.client.ServerDataListener;
 import chat.server.ChatMain;
+
+import java.awt.FlowLayout;
 
 public class ChatFrame {
 
@@ -56,7 +59,11 @@ public class ChatFrame {
 		frame.setVisible(true);
 	}
 	
-
+	public void close(){
+		frame.dispose();
+	}
+	
+	
 	/**
 	 * Create the application.
 	 */
@@ -114,6 +121,15 @@ public class ChatFrame {
 		
 		JLabel lblStatus = new JLabel("STATUS");
 		panel_1.add(lblStatus, BorderLayout.NORTH);
+		
+		JPanel panel_2 = new JPanel();
+		FlowLayout flowLayout = (FlowLayout) panel_2.getLayout();
+		flowLayout.setAlignment(FlowLayout.LEFT);
+		frame.getContentPane().add(panel_2, BorderLayout.NORTH);
+		
+		JButton btnLogout = new JButton("LOGOUT");
+		btnLogout.addActionListener(e->processLogout());
+		panel_2.add(btnLogout);
 	}
 	
 	private void sendText(){
@@ -122,8 +138,21 @@ public class ChatFrame {
 		inputArea.setText("");
 	}
 	
+	private void processLogout(){
+		LoginDialog.client.sendLogout();
+		ChatFrame.INSTANCE.close();
+	}
+	
 	public void printMessage(String msg){
-		chatArea.append(msg);
+		chatArea.append(msg+"\n");
+	}
+	
+	public void addNickName(String nicknam){
+		chatterModel.addElement(nicknam);
+	}
+	
+	public void removeNickName(String nicknam){
+		chatterModel.removeElement(nicknam);
 	}
 	
 	public void updateChatterList( List<String> chatters ){
@@ -131,6 +160,15 @@ public class ChatFrame {
 		for ( String chatter : chatters ) {
 			chatterModel.addElement(chatter);
 		}
+	}
+	
+	class DataRenderer implements ServerDataListener {
+
+		@Override
+		public void onDataReceived(String type, Object data) {
+			
+		}
+		
 	}
 
 }

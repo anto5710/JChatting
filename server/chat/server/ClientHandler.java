@@ -30,7 +30,6 @@ public class ClientHandler implements Runnable {
 		dos = new DataOutputStream(sock.getOutputStream());
 		
 		readNickName();
-		
 		t = new Thread( this );
 		t.start(); 
 	}
@@ -56,6 +55,8 @@ public class ClientHandler implements Runnable {
 				String cmd = dis.readUTF();
 				switch ( cmd) {
 				case "LOGOUT" :
+					ChatMain.unregisterClient(this);
+					running = false;
 					break;
 				case "MSG" :
 					String msg = dis.readUTF(); // blciking
@@ -64,7 +65,6 @@ public class ClientHandler implements Runnable {
 					break;
 				}
 			} catch (IOException e) {
-				//ChatMain.unregisterClient(this);
 				running = false;
 			} 
 		}
@@ -78,10 +78,17 @@ public class ClientHandler implements Runnable {
 	}
 	
 	public void sendData( String cmd, String data) throws IOException{
+		// PRIV_MSG AA BB XXXXXXXXXXX
+		// MSG XXXXX
 		System.out.println(String.format("[%s] %d %s", cmd, 1, data));
 		dos.writeUTF(cmd);
 		dos.writeInt(1);
 		dos.writeUTF(data);
+	}
+	public void sendPublicMsg ( String msg) throws IOException {
+		dos.writeUTF("MSG");
+		dos.writeUTF(msg);
+		dos.flush();
 	}
 	
 	public void sendData(String cmd, String [] data) throws IOException{
@@ -95,7 +102,9 @@ public class ClientHandler implements Runnable {
 	
 	
 	public void sendMessage (String sender, String msg ) throws IOException{
-		sendData("MSG", sender+":"+msg);
+		
+		sendPublicMsg( sender+":"+msg);
+		System.out.println("sent to " + this.nickName + " => " + sender + ":" + msg);
 	}
 
 	public String getNickname() {

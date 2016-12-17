@@ -1,7 +1,5 @@
 package chat.server;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -9,8 +7,6 @@ public class ClientCleaner implements Runnable{
 
 	private Thread thisThread ;
 	
-//	private List<ClientHandler> deads = new ArrayList<ClientHandler>();
-
 	private boolean running;
 	
 	private BlockingQueue<ClientHandler> deads = new ArrayBlockingQueue<>(1000);
@@ -42,12 +38,10 @@ public class ClientCleaner implements Runnable{
 				e.printStackTrace();
 			}
 		}
-		// here
 	}
 
 	private void log(Thread t, String msg) {
 		System.out.printf("[%s] %s\n", t.getName(), msg );
-		
 	}
 	
 }

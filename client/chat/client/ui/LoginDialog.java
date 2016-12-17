@@ -141,7 +141,6 @@ public class LoginDialog extends JDialog {
 				loginBtn.addActionListener((e)->{
 					processLogin();
 					if(ChatFrame.INSTANCE == null) openChatFrame();
-//					client.sendNickname();
 					dispose();
 				});
 				getRootPane().setDefaultButton(loginBtn);
@@ -163,11 +162,9 @@ public class LoginDialog extends JDialog {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					ChatFrame window = new ChatFrame();
-					ChatFrame.INSTANCE = window;
+					ChatFrame.INSTANCE  = new ChatFrame();
 					client.sendNickname();
-					/**/
-					window.showFrame();
+					ChatFrame.INSTANCE.showFrame();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

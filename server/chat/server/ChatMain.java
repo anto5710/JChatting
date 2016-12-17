@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 public class ChatMain {
 
 	static Map<ClientHandler, String> handlers = new HashMap<>();
-	private static List<ClientHandler> deadClients = new ArrayList<>();
 	
 	private static ClientCleaner cleaner ;
 	public static void main(String[] args) throws IOException {
@@ -58,6 +57,29 @@ public class ChatMain {
 	}
 	*/
 	
+	
+	private static void notifyLogin ( ClientHandler loginUser){
+		String nicknam = loginUser.getNickname();
+		for(ClientHandler handler: getClients()){
+			try {
+				handler.sendData("LOGIN", nicknam);
+			} catch (IOException e) {
+				cleaner.registerDeadClient(handler);
+			}
+		}
+	}
+	
+	private static void notifyLogout ( ClientHandler logoutUser ) {
+		String nicknam = logoutUser.getNickname();
+		for(ClientHandler handler: getClients()){
+			try {
+				handler.sendData("LOGOUT", nicknam);
+			} catch (IOException e) {
+				cleaner.registerDeadClient(handler);
+			}
+		}
+	}
+	
 	private static void sendChatterList(ClientHandler loginUser){
 		// AA,BB,CC
 		try {
@@ -65,23 +87,8 @@ public class ChatMain {
 					"CHATTER_LIST",  
 					handlers.values().toArray(new String[0]));
 		} catch (IOException e) {
-//			deadClients.add(loginUser);
 			cleaner.registerDeadClient(loginUser);
 		}
-	}
-	
-	public static void notifyLogin ( ClientHandler loginUser){
-		for(ClientHandler handler: getClients()){
-			try {
-				handler.sendData("LOGIN", handler.getNickname());
-			} catch (IOException e) {
-				cleaner.registerDeadClient(handler);
-			}
-		}
-	}
-	
-	public static void notifyLogout ( ClientHandler logoutUsers ) {
-		
 	}
 	
 	public static Set<ClientHandler> getClients(){
@@ -89,15 +96,14 @@ public class ChatMain {
 	}
 	
 	public static void broadcastMSG (String sender, String msg ) {
-		System.out.println("###" + getClients().size());
 		for(ClientHandler handler : getClients()){
 			try {
 				handler.sendMessage( sender, msg);
 			} catch (IOException e) {
-//				deadClients.add(handler);
+				e.printStackTrace();
 				cleaner.registerDeadClient(handler);
 			}
 		}
-//		removeDeadClients();
+		System.out.println("###" + getClients().size());
 	}
 }

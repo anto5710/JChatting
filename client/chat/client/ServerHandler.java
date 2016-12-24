@@ -7,13 +7,17 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import chat.client.protocol.Login;
 import chat.client.ui.ChatFrame;
 import chat.protocol.IProtocol;
+import chat.protocol.Login;
+import chat.protocol.PublicMessage;
+import chat.protocol.UnknownCommandException;
+import chat.util.Util;
 
 /**
  * 서버에서 전달되는 메시지를 처리합니다.
@@ -31,21 +35,6 @@ public class ServerHandler implements Runnable{
 	
 	private List<ServerDataListener> listeners = new ArrayList<>();
 	
-	private Map<String, IProtocol> protocolMap =new HashMap<String, IProtocol>();
-	{
-		protocolMap.put("LOGIN", new Login());
-//		protocolMap.put("LOGIN", new Login());
-//		protocolMap.put("LOGIN", new Login());
-//		protocolMap.put("LOGIN", new Login());
-//		protocolMap.put("LOGIN", new Login());
-//		protocolMap.put("LOGIN", new Login());
-	}
-	public ServerHandler( Socket server) {
-		this.server = server ;
-		this.t = new Thread(this);
-		t.start();
-	}
-	
 	public void addListener ( ServerDataListener listener) {
 		this.listeners.add(listener);
 	}
@@ -54,74 +43,41 @@ public class ServerHandler implements Runnable{
 		this.listeners.remove(listener);
 	}
 	
+	private Map<String, IProtocol> protocolMap =new HashMap<String, IProtocol>();
+	{
+		registerProtocols(PublicMessage.class, Login.class);
+	}
+	
+	private void registerProtocols(Class <? extends IProtocol>...classes) {
+		Arrays.stream(classes).forEach(cls -> {
+			IProtocol prt = Util.createInstance(cls);
+			protocolMap.put(prt.getCommand(), prt);			
+		});
+	}
+	
+	public ServerHandler( Socket server) throws IOException{
+		this.server = server ;
+		
+		dis = new DataInputStream(server.getInputStream());
+		dos = new DataOutputStream(server.getOutputStream());
+		
+		t = new Thread(this);
+		t.start();
+	}
+	
+	
 	@Override
 	public void run() {
-		try {
-			dis = new DataInputStream(server.getInputStream());
-			dos = new DataOutputStream(server.getOutputStream());
-			running = true;
-		} catch (IOException e) {
-			throw new RuntimeException("failed to create stream");
-		}
-		
 		while ( running ) {
 			try {
-				String type = dis.readUTF();
+				String cmd = dis.readUTF();
 				/* TODO 이와 같이 프로토콜 해석 구현체를 따로 분리해서 사용합니다. */
-				IProtocol protocol = protocolMap.get(type);
-				if ( protocol == null ) {
-					;
-				} else {
+				IProtocol protocol = protocolMap.get(cmd);
+				if ( protocol != null ) {
 					Object data = protocol.read(dis); // String []
-					for ( ServerDataListener listener : listeners ) {
-						listener.onDataReceived(type, data);
-					}
-				}
-				
-				
-				
-				switch (type) {
-				case "MSG":
-//					int sz = dis.readInt();
-					String msg;
-					msg = dis.readUTF();
-					INSTANCE.printMessage(convertMessage(msg));
-					break;
+					notifyResponse(cmd, data);
 					
-				case "CHATTER_LIST" :
-					// [CHATTER_LIST] AA,BB,CC
-					List<String> chatterList = new ArrayList<>();
-					int size = dis.readInt();
-					
-					for(int cnt = 0; cnt < size; cnt++){
-						chatterList.add(dis.readUTF());
-					}
-					INSTANCE.updateChatterList(chatterList);
-					break;
-					
-				case "LOGIN" :
-					dis.readInt();
-					String nicknam = dis.readUTF();
-					INSTANCE.addNickName(nicknam);
-					INSTANCE.printMessage(nicknam+" login");
-					break;
-					
-				case "LOGOUT" :
-					dis.readInt();
-					nicknam = dis.readUTF();
-					INSTANCE.removeNickName(nicknam);
-					INSTANCE.printMessage(nicknam+ " logout");
-					break;
-					
-				default:
-					break;
-				}
-				/*
-				 *  MSG, 
-				 *  CHATER_LIST, 
-				 *  LOGOUT, 
-				 *  LOGIN
-				 */
+				} else throw new UnknownCommandException("invalid CMD? " + cmd );
 			} catch (IOException e) {
 				e.printStackTrace();
 				running = false;
@@ -130,15 +86,13 @@ public class ServerHandler implements Runnable{
 		System.out.println("client finished");
 	}
 
-	private String convertMessage(String input){
-		int l = input.indexOf(":");
-		if(l==-1) return ""; // can't find regex
-		
-		int length = input.length();
-		String sender = input.substring(0, l);
-		String msg = input.substring(l+1, length);
-		return String.format("%s: %s", sender, msg); 
+	private void notifyResponse(String cmd, Object data) {
+		for ( ServerDataListener listener : listeners ) {
+			listener.onDataReceived(cmd, data);
+		}
 	}
+
+	
 	
 	public void sendData(String cmd, String data){
 		try {

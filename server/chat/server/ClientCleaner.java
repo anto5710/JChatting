@@ -33,7 +33,7 @@ public class ClientCleaner implements Runnable{
 				log ( Thread.currentThread(), "WAITING FOR DEAD CLIENT");
 				dead = deads.take();
 				log ( Thread.currentThread(), "DEAD CLIENT : " + dead.getNickname());
-				ChatMain.unregisterClient(dead);
+				ChatServer.unregisterClient(dead);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

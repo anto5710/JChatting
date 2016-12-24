@@ -19,11 +19,13 @@ import java.util.stream.Collectors;
  *  PORT 1 ~ 65535
  *  
  */
-public class ChatMain {
+public class ChatServer {
 
 	static Map<ClientHandler, String> handlers = new HashMap<>();
 	
 	private static ClientCleaner cleaner ;
+	private static DataHandle dataHandler = new DataHandle();
+	
 	public static void main(String[] args) throws IOException {
 		
 		cleaner = new ClientCleaner();
@@ -36,6 +38,7 @@ public class ChatMain {
 			Socket client = serverSock.accept(); // blocking method
 			ClientHandler handler = new ClientHandler(client);
 			registerClient(handler);
+			
 		}
 		serverSock.close();
 	}
@@ -44,6 +47,7 @@ public class ChatMain {
 		notifyLogin(loginClient);// handler 제외한 기존의 채팅 참여자들한테 보낼 메세지가 따로 있어야 할 듯?
 		handlers.put(loginClient, loginClient.getNickname());
 		sendChatterList(loginClient); // 지금 로인한 당사자한테
+		loginClient.registerHandler(dataHandler);
 		
 	}
 	
@@ -62,7 +66,7 @@ public class ChatMain {
 		String nicknam = loginUser.getNickname();
 		for(ClientHandler handler: getClients()){
 			try {
-				handler.sendData("LOGIN", nicknam);
+				handler.notifyLogin(nicknam);
 			} catch (IOException e) {
 				cleaner.registerDeadClient(handler);
 			}
@@ -73,19 +77,21 @@ public class ChatMain {
 		String nicknam = logoutUser.getNickname();
 		for(ClientHandler handler: getClients()){
 			try {
-				handler.sendData("LOGOUT", nicknam);
+				handler.notifyLogout(nicknam);
 			} catch (IOException e) {
 				cleaner.registerDeadClient(handler);
 			}
 		}
 	}
 	
+	public static String[] getChatterList(){
+		return handlers.values().toArray(new String[0]);
+	}
+	
 	private static void sendChatterList(ClientHandler loginUser){
 		// AA,BB,CC
 		try {
-			loginUser.sendData(
-					"CHATTER_LIST",  
-					handlers.values().toArray(new String[0]));
+			loginUser.sendChatterList(getChatterList());
 		} catch (IOException e) {
 			cleaner.registerDeadClient(loginUser);
 		}
@@ -105,5 +111,41 @@ public class ChatMain {
 			}
 		}
 		System.out.println("###" + getClients().size());
+	}
+	
+	/* sun이라는 회사에서 만든 언어가 자바!
+	 * 
+	 * 상황 - 1990년도 
+	 * c언어 / c++ - 기계어를 건드립니다.
+	 * 
+	 * if ( x ) {
+	 *   if 
+	 *  ;
+	 *  else if ( y ) {
+	 *  ;
+	 *  } else {
+	 *  ;
+	 *  }
+	 */
+	static class DataHandle implements CommandHandler {
+		
+		@Override
+		public void handleData(ClientHandler client, String cmd, Object data) {
+			switch ( cmd ) {
+			case "MSG" :
+				String nickName = client.getNickname();
+				String msg = (String) data;
+				System.out.printf( "%s: %s\n", nickName, msg);
+				ChatServer.broadcastMSG( nickName, msg);
+				
+				break;
+				
+			case "LOGUT" :
+				unregisterClient(client);
+				client.stop();
+				
+				break;
+			}
+		}
 	}
 }

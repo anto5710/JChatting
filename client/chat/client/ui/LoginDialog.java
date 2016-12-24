@@ -162,7 +162,7 @@ public class LoginDialog extends JDialog {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					ChatFrame.INSTANCE  = new ChatFrame();
+					ChatFrame.INSTANCE  = new ChatFrame(client);
 					client.sendNickname();
 					ChatFrame.INSTANCE.showFrame();
 				} catch (Exception e) {

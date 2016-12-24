@@ -1,11 +1,14 @@
 package chat.client.ui;
 
+import static chat.client.ui.ChatFrame.INSTANCE;
+
 import java.awt.EventQueue;
 
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
 
 import java.awt.BorderLayout;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
@@ -16,8 +19,9 @@ import javax.swing.JPanel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 
+import chat.client.ChatClient;
 import chat.client.ServerDataListener;
-import chat.server.ChatMain;
+import chat.server.ChatServer;
 
 import java.awt.FlowLayout;
 
@@ -38,6 +42,8 @@ public class ChatFrame {
 	public static ChatFrame INSTANCE;
 	private JTextArea inputArea;
 	private JTextArea chatArea;
+	private ChatClient connector;
+	private DataRenderer dataHandler;
 
 	/**
 	 * Launch the application.
@@ -69,6 +75,13 @@ public class ChatFrame {
 	 */
 	public ChatFrame() {
 		initialize();
+	}
+
+	public ChatFrame(ChatClient client) {
+		this.connector = client;
+		
+		this.dataHandler = new DataRenderer();
+		this.connector.getServerHandler().addListener(dataHandler);
 	}
 
 	/**
@@ -155,20 +168,89 @@ public class ChatFrame {
 		chatterModel.removeElement(nicknam);
 	}
 	
-	public void updateChatterList( List<String> chatters ){
+	public void updateChatterList( String[] nickNames ){
 		chatterModel.clear();
-		for ( String chatter : chatters ) {
+		for ( String chatter : nickNames ) {
 			chatterModel.addElement(chatter);
 		}
 	}
 	
-	class DataRenderer implements ServerDataListener {
+	static class DataRenderer implements ServerDataListener {
 
-		@Override
-		public void onDataReceived(String type, Object data) {
+		private String convertPublicMSG(String input){
+			int l = input.indexOf(":");
+			if(l==-1) return ""; // can't find regex
 			
+			int length = input.length();
+			String sender = input.substring(0, l);
+			String msg = input.substring(l+1, length);
+			return String.format("%s: %s", sender, msg); 
 		}
 		
+		@Override
+		public void onDataReceived(String cmd, Object data) {
+			switch (cmd) {
+			case "MSG":
+				String msg = convertPublicMSG((String)data);
+				INSTANCE.printMessage(msg);
+				break;
+				
+			case "CHATTER_LIST":	
+				INSTANCE.updateChatterList((String[]) data);
+				break;
+				
+			case "LOGIN":
+				
+				String nickNam = (String)data;
+				INSTANCE.addNickName(nickNam);
+				INSTANCE.printMessage(nickNam+" login");
+				break;
+				
+			case "LOGOUT":
+				
+				nickNam = (String)data;
+				INSTANCE.removeNickName(nickNam);
+				INSTANCE.printMessage(nickNam+" logout");
+				break;
+			}
+		}
+		/*
+		switch (cmd) {
+		case "MSG":
+			String msg;
+			msg = dis.readUTF();
+			INSTANCE.printMessage(convertMessage(msg));
+			break;
+			
+		case "CHATTER_LIST" :
+			// [CHATTER_LIST] AA,BB,CC
+			List<String> chatterList = new ArrayList<>();
+			int size = dis.readInt();
+			
+			for(int cnt = 0; cnt < size; cnt++){
+				chatterList.add(dis.readUTF());
+			}
+			INSTANCE.updateChatterList(chatterList);
+			break;
+			
+		case "LOGIN" :
+			dis.readInt();
+			String nicknam = dis.readUTF();
+			INSTANCE.addNickName(nicknam);
+			INSTANCE.printMessage(nicknam+" login");
+			break;
+			
+		case "LOGOUT" :
+			dis.readInt();
+			nicknam = dis.readUTF();
+			INSTANCE.removeNickName(nicknam);
+			INSTANCE.printMessage(nicknam+ " logout");
+			break;
+			
+		default:
+			break;
+		}
+		*/
 	}
 
 }

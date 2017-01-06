@@ -1,10 +1,14 @@
 package chat.client.ui;
 
 import static chat.util.Util.*;
+
 import java.awt.EventQueue;
+
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
+
 import java.awt.BorderLayout;
+
 import javax.swing.DefaultListModel;
 import javax.swing.JScrollPane;
 import javax.swing.JList;
@@ -15,7 +19,9 @@ import javax.swing.JLabel;
 
 import chat.client.ServerDataListener;
 import chat.client.ServerHandler;
+
 import java.awt.FlowLayout;
+import java.util.Arrays;
 
 public class ChatFrame {
 
@@ -37,21 +43,21 @@ public class ChatFrame {
 	private ServerHandler connector;
 	private DataRenderer dataHandler;
 
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					ChatFrame window = new ChatFrame();
-					window.frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
+//	/**
+//	 * Launch the application.
+//	 */
+//	public static void main(String[] args) {
+//		EventQueue.invokeLater(new Runnable() {
+//			public void run() {
+//				try {
+//					ChatFrame window = new ChatFrame(null);
+//					window.frame.setVisible(true);
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		});
+//	}
 	
 	public void showFrame() {
 		frame.setVisible(true);
@@ -65,13 +71,9 @@ public class ChatFrame {
 	/**
 	 * Create the application.
 	 */
-	public ChatFrame() {
-		initialize();
-	}
-
 	public ChatFrame(ServerHandler client) {
+		initialize();
 		this.connector = client;
-		
 		this.dataHandler = new DataRenderer();
 		this.connector.addListener(dataHandler);
 	}
@@ -162,9 +164,7 @@ public class ChatFrame {
 	
 	public void updateChatterList( String[] nickNames ){
 		chatterModel.clear();
-		for ( String chatter : nickNames ) {
-			chatterModel.addElement(chatter);
-		}
+		Arrays.stream(nickNames).forEach(chatterModel::addElement);
 	}
 	
 	static class DataRenderer implements ServerDataListener {

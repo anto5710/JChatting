@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import chat.client.protocol.ChatterList;
 import chat.protocol.IProtocol;
 import chat.protocol.Login;
 import chat.protocol.Logout;
@@ -29,12 +30,11 @@ public class ServerHandler implements Runnable{
 	private DataInputStream dis ;
 	private DataOutputStream dos ;
 	
-	private boolean running = false;
-	
+	private boolean running = true;
 	private final Socket SERVER;
 	private final String IP, NICKNAME;
 	private final int PORT;
-	
+
 	private List<ServerDataListener> listeners = new ArrayList<>();
 	
 	public void addListener ( ServerDataListener listener) {
@@ -47,7 +47,7 @@ public class ServerHandler implements Runnable{
 
 	private Map<String, IProtocol> protocolMap =new HashMap<String, IProtocol>();
 	{
-		registerProtocols(PublicMessage.class, Login.class, Logout.class);
+		registerProtocols(PublicMessage.class, Login.class, Logout.class, ChatterList.class);
 	}
 	
 	private void registerProtocols(Class <? extends IProtocol>...classes) {
@@ -68,6 +68,7 @@ public class ServerHandler implements Runnable{
 		sendLogin(nickName);
 		
 		t = new Thread(this);
+		t.setName("T-SH");
 		t.start();
 	}
 	
@@ -104,10 +105,22 @@ public class ServerHandler implements Runnable{
 	}
 	
 	public void sendMessage(String msg) throws IOException {
-		protocolMap.get("MSG").write(dos, msg);
+		protocolMap.get("MSG").write(dos, NICKNAME+": "+msg);
 	}
 	
 	public void sendLogout() throws IOException{ 
 		protocolMap.get("LOGOUT").write(dos, "");
+	}
+	
+	public String getIP() {
+		return IP;
+	}
+	
+	public String getNICKNAME() {
+		return NICKNAME;
+	}
+	
+	public int getPORT() {
+		return PORT;
 	}
 }

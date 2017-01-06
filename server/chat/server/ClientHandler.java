@@ -39,7 +39,7 @@ public class ClientHandler implements Runnable {
 	private Map<String, IProtocol> protocolMap = new HashMap<String, IProtocol>();
 	{
 		try {
-			registerProtocols(PublicMessage.class,ChatterList.class);
+			registerProtocols(PublicMessage.class,ChatterList.class,Login.class);
 		} catch (Exception e) {
 			throw new RuntimeException("Error while registering protocols");
 		}
@@ -68,18 +68,20 @@ public class ClientHandler implements Runnable {
 		//init
 		dis = new DataInputStream(sock.getInputStream());
 		dos = new DataOutputStream(sock.getOutputStream());
-		
 		t = new Thread( this );
-		t.start(); 
 	}
 	
-	private void readNickName() {
+	public void readNickName() {
 		try {
 			// read nickname
 			String cmd = dis.readUTF(); // "LOGIN"
 			if( "LOGIN".equals(cmd) ) {
 				this.nickName = dis.readUTF();
-				t.setName("T-" + this.nickName);
+				
+				if(!t.isAlive()){
+					t.setName("T-" + this.nickName);
+					t.start();
+				}
 			} else throw new ChatProtocolException ( "expected LOGIN but " + cmd );
 		} catch (IOException e1) {
 			throw new RuntimeException("fail to create stream");
@@ -93,7 +95,6 @@ public class ClientHandler implements Runnable {
 	
 	@Override
 	public void run() {
-		readNickName();
 		while ( running ) {
 			try {
 				String cmd = dis.readUTF(); // MSG, LOGOUT
@@ -128,9 +129,9 @@ public class ClientHandler implements Runnable {
 		protocolMap.get("CHATTER_LIST").write(dos, nickNames);
 	}
 	
-	public void sendMessage (String sender, String msg ) throws IOException{
+	public void sendMessage (String msg ) throws IOException{
 		protocolMap.get("MSG").write(dos, msg);
-		System.out.println("sent to " + this.nickName + " => " + sender + ":" + msg);
+		System.out.println("sent to " + this.nickName + " => " + msg);
 	}
 
 	public String getNickname() {

@@ -141,7 +141,7 @@ public class LoginDialog extends JDialog {
 				buttonPane.add(loginBtn);
 				loginBtn.addActionListener((e)->{
 					processLogin();
-					if(ChatFrame.INSTANCE == null) openChatFrame();
+					openChatFrame();
 					dispose();
 				});
 				getRootPane().setDefaultButton(loginBtn);

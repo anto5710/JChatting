@@ -10,7 +10,7 @@ public class Util {
 	 * @param <T> 실행하려는 함수형 인터페이스의 구현체
 	 * @throws RuntimeException
 	 */
-	public static <T> T tryToDo(ReturnableAction<T> action) throws RuntimeException{
+	public static <T> T tryDoing(ReturnableAction<T> action) throws RuntimeException{
 		try {
 			return action.run();
 		} catch (Exception e) {

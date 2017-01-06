@@ -40,10 +40,13 @@ public class ChatServer {
 	}
 	
 	public static void registerClient(ClientHandler loginClient){
+		loginClient.readNickName();
+		loginClient.registerHandler(dataHandler);
+		//
 		notifyLogin(loginClient);// handler 제외한 기존의 채팅 참여자들한테 보낼 메세지가 따로 있어야 할 듯?
 		handlers.put(loginClient, loginClient.getNickname());
-		sendChatterList(loginClient); // 지금 로인한 당사자한테
-		loginClient.registerHandler(dataHandler);
+		sendChatterList(loginClient); // 지금 로그인한 당사자한테
+		//
 	}
 	
 	public static void unregisterClient(ClientHandler logoutClient){
@@ -83,6 +86,7 @@ public class ChatServer {
 		try {
 			loginUser.sendChatterList(getChatterList());
 		} catch (IOException e) {
+			e.printStackTrace();
 			cleaner.registerDeadClient(loginUser);
 		}
 	}
@@ -94,7 +98,7 @@ public class ChatServer {
 	public static void broadcastMSG (String sender, String msg ) {
 		for(ClientHandler handler : getClients()){
 			try {
-				handler.sendMessage( sender, msg);
+				handler.sendMessage(msg);
 			} catch (IOException e) {
 				e.printStackTrace();
 				cleaner.registerDeadClient(handler);

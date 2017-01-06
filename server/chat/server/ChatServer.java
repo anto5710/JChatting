@@ -133,7 +133,7 @@ public class ChatServer {
 				ChatServer.broadcastMSG( nickName, msg);
 				
 				break;
-			case "LOGUT" :
+			case "LOGOUT" :
 				unregisterClient(client);
 				client.stop();
 				

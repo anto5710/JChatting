@@ -1,25 +1,20 @@
 package chat.server;
 
 import java.io.DataInputStream;
-
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Semaphore;
-import java.util.stream.Collectors;
 
-import javax.management.RuntimeErrorException;
 
 import chat.client.protocol.ChatterList;
 import chat.protocol.IProtocol;
 import chat.protocol.Login;
+import chat.protocol.Logout;
 import chat.protocol.PublicMessage;
 import chat.protocol.UnknownCommandException;
 import chat.util.Util;
@@ -39,7 +34,7 @@ public class ClientHandler implements Runnable {
 	private Map<String, IProtocol> protocolMap = new HashMap<String, IProtocol>();
 	{
 		try {
-			registerProtocols(PublicMessage.class,ChatterList.class,Login.class);
+			registerProtocols(PublicMessage.class,ChatterList.class,Login.class, Logout.class);
 		} catch (Exception e) {
 			throw new RuntimeException("Error while registering protocols");
 		}

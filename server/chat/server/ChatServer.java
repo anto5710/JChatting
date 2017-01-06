@@ -3,13 +3,9 @@ package chat.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 /**
  *  172.30.1.39:3076
  *  
@@ -48,7 +44,6 @@ public class ChatServer {
 		handlers.put(loginClient, loginClient.getNickname());
 		sendChatterList(loginClient); // 지금 로인한 당사자한테
 		loginClient.registerHandler(dataHandler);
-		
 	}
 	
 	public static void unregisterClient(ClientHandler logoutClient){
@@ -56,11 +51,6 @@ public class ChatServer {
 			notifyLogout(logoutClient);
 		}
 	}
-	
-	/*
-	}
-	*/
-	
 	
 	private static void notifyLogin ( ClientHandler loginUser){
 		String nicknam = loginUser.getNickname();
@@ -128,7 +118,7 @@ public class ChatServer {
 	 *  }
 	 */
 	static class DataHandle implements CommandHandler {
-		
+	
 		@Override
 		public void handleData(ClientHandler client, String cmd, Object data) {
 			switch ( cmd ) {
@@ -139,7 +129,6 @@ public class ChatServer {
 				ChatServer.broadcastMSG( nickName, msg);
 				
 				break;
-				
 			case "LOGUT" :
 				unregisterClient(client);
 				client.stop();

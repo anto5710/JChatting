@@ -1,14 +1,17 @@
 package chat.server;
 
 import java.io.DataInputStream;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 
@@ -36,7 +39,7 @@ public class ClientHandler implements Runnable {
 	private Map<String, IProtocol> protocolMap = new HashMap<String, IProtocol>();
 	{
 		try {
-			registerProtocols(PublicMessage.class);
+			registerProtocols(PublicMessage.class,ChatterList.class);
 		} catch (Exception e) {
 			throw new RuntimeException("Error while registering protocols");
 		}
@@ -44,21 +47,15 @@ public class ClientHandler implements Runnable {
 	
 	@SafeVarargs
 	final private void registerProtocols( Class <? extends IProtocol>...classes) {
-//		IProtocol prt = null;
-//		prt = null;
 		Arrays.stream(classes).forEach(cls -> {
 			IProtocol prt = Util.createInstance(cls);
 			protocolMap.put(prt.getCommand(), prt);			
 		});
 	}
 	
-	private List<CommandHandler> handlers = new ArrayList<CommandHandler>(); 
+	private Set<CommandHandler> handlers = new HashSet<>(); 
 	
 	public void registerHandler ( CommandHandler handler) {
-		
-		if ( handlers.contains(handler)) {
-			handlers.remove(handler);
-		}
 		this.handlers.add ( handler );
 	}
 	
@@ -66,7 +63,7 @@ public class ClientHandler implements Runnable {
 		this.handlers.remove(handler);
 	}
 	
-	public ClientHandler ( Socket client ) throws IOException {
+	public ClientHandler ( Socket client) throws IOException {
 		sock = client ;
 		//init
 		dis = new DataInputStream(sock.getInputStream());
@@ -84,7 +81,6 @@ public class ClientHandler implements Runnable {
 				this.nickName = dis.readUTF();
 				t.setName("T-" + this.nickName);
 			} else throw new ChatProtocolException ( "expected LOGIN but " + cmd );
-			
 		} catch (IOException e1) {
 			throw new RuntimeException("fail to create stream");
 		}
@@ -110,12 +106,12 @@ public class ClientHandler implements Runnable {
 				}
 				
 			} catch (IOException e) {
+				e.printStackTrace();
 				running = false;
 			} 
 		}
 		/**
 		 * TODO
-		 * 
 		 * ChatMain.handlers에서 현재 ClientHandler를 제거해야 합니다.
 		 * 원래는 아래처럼 제거하기 전에 다른 참여자들에게 로그아웃했다는 메세지를 보내줘야 합니다.
 		 */
@@ -127,29 +123,6 @@ public class ClientHandler implements Runnable {
 			ch.handleData(this, cmd, data);
 		}
 	}
-	
-//	public void sendData( String cmd, String data) throws IOException{
-//		// PRIV_MSG AA BB XXXXXXXXXXX
-//		// MSG XXXXX
-//		System.out.println(String.format("[%s] %d %s", cmd, 1, data));
-//		dos.writeUTF(cmd);
-////		dos.writeInt(1);
-//		dos.writeUTF(data);
-//	}
-//	public void sendPublicMsg ( String msg) throws IOException {
-//		dos.writeUTF("MSG");
-//		dos.writeUTF(msg);
-//		dos.flush();
-//	}
-//	
-//	public void sendData(String cmd, String [] data) throws IOException{
-//		System.out.println(String.format("[%s] %d %s", cmd, data.length, Arrays.toString(data) ));
-//		dos.writeUTF(cmd);
-//		dos.writeInt(data.length);
-//		for (int i = 0; i < data.length; i++) {
-//			dos.writeUTF(data[i]);
-//		}
-//	}
 	
 	public void sendChatterList (String[]nickNames) throws IOException{
 		protocolMap.get("CHATTER_LIST").write(dos, nickNames);

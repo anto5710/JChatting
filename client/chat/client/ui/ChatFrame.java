@@ -1,16 +1,10 @@
 package chat.client.ui;
 
-import static chat.client.ui.ChatFrame.INSTANCE;
-
+import static chat.util.Util.*;
 import java.awt.EventQueue;
-
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
-
 import java.awt.BorderLayout;
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.swing.DefaultListModel;
 import javax.swing.JScrollPane;
 import javax.swing.JList;
@@ -19,10 +13,8 @@ import javax.swing.JPanel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 
-import chat.client.ChatClient;
 import chat.client.ServerDataListener;
-import chat.server.ChatServer;
-
+import chat.client.ServerHandler;
 import java.awt.FlowLayout;
 
 public class ChatFrame {
@@ -42,7 +34,7 @@ public class ChatFrame {
 	public static ChatFrame INSTANCE;
 	private JTextArea inputArea;
 	private JTextArea chatArea;
-	private ChatClient connector;
+	private ServerHandler connector;
 	private DataRenderer dataHandler;
 
 	/**
@@ -77,11 +69,11 @@ public class ChatFrame {
 		initialize();
 	}
 
-	public ChatFrame(ChatClient client) {
+	public ChatFrame(ServerHandler client) {
 		this.connector = client;
 		
 		this.dataHandler = new DataRenderer();
-		this.connector.getServerHandler().addListener(dataHandler);
+		this.connector.addListener(dataHandler);
 	}
 
 	/**
@@ -147,12 +139,12 @@ public class ChatFrame {
 	
 	private void sendText(){
 		String text = inputArea.getText();
-		LoginDialog.client.sendMessage(text);
+		tryDoing(()->{LoginDialog.client.sendMessage(text);});
 		inputArea.setText("");
 	}
 	
 	private void processLogout(){
-		LoginDialog.client.sendLogout();
+		tryDoing(()->{LoginDialog.client.sendLogout();});
 		ChatFrame.INSTANCE.close();
 	}
 	
@@ -214,43 +206,5 @@ public class ChatFrame {
 				break;
 			}
 		}
-		/*
-		switch (cmd) {
-		case "MSG":
-			String msg;
-			msg = dis.readUTF();
-			INSTANCE.printMessage(convertMessage(msg));
-			break;
-			
-		case "CHATTER_LIST" :
-			// [CHATTER_LIST] AA,BB,CC
-			List<String> chatterList = new ArrayList<>();
-			int size = dis.readInt();
-			
-			for(int cnt = 0; cnt < size; cnt++){
-				chatterList.add(dis.readUTF());
-			}
-			INSTANCE.updateChatterList(chatterList);
-			break;
-			
-		case "LOGIN" :
-			dis.readInt();
-			String nicknam = dis.readUTF();
-			INSTANCE.addNickName(nicknam);
-			INSTANCE.printMessage(nicknam+" login");
-			break;
-			
-		case "LOGOUT" :
-			dis.readInt();
-			nicknam = dis.readUTF();
-			INSTANCE.removeNickName(nicknam);
-			INSTANCE.printMessage(nicknam+ " logout");
-			break;
-			
-		default:
-			break;
-		}
-		*/
 	}
-
 }

@@ -1,6 +1,7 @@
 package chat.client.ui;
 
 import java.awt.BorderLayout;
+
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
 
@@ -17,7 +18,7 @@ import java.awt.GridBagConstraints;
 
 import javax.swing.JTextField;
 
-import chat.client.ChatClient;
+import chat.client.ServerHandler;
 
 import java.awt.Insets;
 import java.io.IOException;
@@ -32,7 +33,7 @@ public class LoginDialog extends JDialog {
 	private JTextField portField;
 	private JTextField nicknameField;
 	
-	public static ChatClient client;
+	public static ServerHandler client;
 	private JTextArea errorArea;
 
 	/**
@@ -162,8 +163,7 @@ public class LoginDialog extends JDialog {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					ChatFrame.INSTANCE  = new ChatFrame(client);
-					client.sendNickname();
+					ChatFrame.INSTANCE = new ChatFrame(client);
 					ChatFrame.INSTANCE.showFrame();
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -184,7 +184,7 @@ public class LoginDialog extends JDialog {
 		int port;
 		try {
 			port = Integer.parseInt(portField.getText());
-			client = new ChatClient(IP, port, nickName);
+			client = new ServerHandler(IP, port, nickName);
 			return true;
 		} catch (Exception e) {
 			errorArea.append( String.format("[%s] %s\n",  e.getClass().getName(), e.getMessage() ));

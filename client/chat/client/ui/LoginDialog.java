@@ -140,8 +140,8 @@ public class LoginDialog extends JDialog {
 				loginBtn.setActionCommand("OK");
 				buttonPane.add(loginBtn);
 				loginBtn.addActionListener((e)->{
-					processLogin();
-					openChatFrame();
+					ChatFrame frame = openChatFrame();
+					processLogin(frame);
 					dispose();
 				});
 				getRootPane().setDefaultButton(loginBtn);
@@ -159,26 +159,23 @@ public class LoginDialog extends JDialog {
 	/**
 	 * 채팅 화면을 보여줍니다.
 	 */
-	private void openChatFrame() {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					
-					ChatFrame.INSTANCE = new ChatFrame(client);
-					ChatFrame.INSTANCE.showFrame();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-		
+	private ChatFrame openChatFrame() {
+	
+		try {
+			ChatFrame.INSTANCE = new ChatFrame();
+			ChatFrame.INSTANCE.showFrame();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return ChatFrame.INSTANCE;
 	}
 
 	/**
 	 * 서버에 로그인을 시도합니다.
 	 * @return 로그인 성공 여부
 	 */
-	private boolean processLogin() {
+	private boolean processLogin(ChatFrame frame) {
+		
 		String IP = ipField.getText();
 		String nickName = nicknameField.getText();
 
@@ -186,6 +183,8 @@ public class LoginDialog extends JDialog {
 		try {
 			port = Integer.parseInt(portField.getText());
 			client = new ServerHandler(IP, port, nickName);
+			frame.sethandler ( client );
+			client.sendLogin(nickName);
 			return true;
 		} catch (Exception e) {
 			errorArea.append( String.format("[%s] %s\n",  e.getClass().getName(), e.getMessage() ));

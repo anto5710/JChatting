@@ -3,7 +3,10 @@ package chat.protocol;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.function.Consumer;
+
+import util.Util;
 /**
  * 채팅 프로토콜 공통 구현체입니다.
  * <ul>
@@ -42,7 +45,15 @@ public abstract class AbstractProtocol implements IProtocol {
 		dos.flush();
 	}
 	
-//	protected void writeStrings ( DataOutputStream dos, String [] values) throws IOException {
-//		;
-//	}
+	protected void writeString(DataOutputStream dos, String...datas) throws IOException{
+		if(datas.length==1) writeString(dos, datas[0]);
+	
+		dos.writeUTF(getCommand());
+		dos.writeInt(datas.length);
+		
+		for(String data : datas){
+			dos.writeUTF(data);
+		}
+		dos.flush();
+	}
 }

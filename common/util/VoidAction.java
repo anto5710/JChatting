@@ -1,4 +1,4 @@
-package chat.util;
+package util;
 
 @FunctionalInterface
 public interface VoidAction{

@@ -10,8 +10,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import util.Logger;
+import util.Util;
 import chat.protocol.AbstractProtocol;
-import chat.util.Util;
 
 public class ChatterList extends AbstractProtocol{
 

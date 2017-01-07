@@ -3,9 +3,13 @@ package chat.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import chat.client.ui.LoginDialog;
 /**
@@ -97,16 +101,25 @@ public class ChatServer {
 		return handlers.keySet();
 	}
 	
-	public static void broadcastMSG (String sender, String msg ) {
-		for(ClientHandler handler : getClients()){
+	public static void sendMSGto(String sender, String msg, Collection<ClientHandler>nickNames){
+		/*
+		List<ClientHandler>recivers = getClients().stream().
+						filter(handler->nickNames.contains(handler.getNickname())).
+						collect(Collectors.toList());
+		*/
+//		System.out.println("send to ###" + recivers.size() + " clients");
+		for(ClientHandler handler: nickNames){
 			try {
 				handler.sendMessage(msg);
 			} catch (IOException e) {
-				e.printStackTrace();
 				cleaner.registerDeadClient(handler);
+				e.printStackTrace();
 			}
 		}
-		System.out.println("###" + getClients().size());
+	}
+	
+	public static void broadcastMSG (String sender, String msg ) {
+		sendMSGto(sender, msg, getClients());
 	}
 	
 	/* sun이라는 회사에서 만든 언어가 자바!
@@ -123,16 +136,26 @@ public class ChatServer {
 	 *  ;
 	 *  }
 	 */
+	
 	static class DataHandle implements CommandHandler {
 	
 		@Override
 		public void handleData(ClientHandler client, String cmd, Object data) {
 			switch ( cmd ) {
 			case "PRV_MSG" :
+				Map<String, Object> map = (Map) data;
+				String sender = client.getNickname();
+				String msg = (String) map.get("msg");
+				List<String> receiverNames = (List<String>) map.get("receivers");
+				List<ClientHandler> receivers = handlers.keySet().stream()
+						                                         .filter(h-> receiverNames.contains(h.getNickname()))
+						                                         .collect(Collectors.toList());
+				ChatServer.sendMSGto(sender, msg, receivers );
+				
 				break;
 			case "MSG" :
 				String nickName = client.getNickname();
-				String msg = (String) data;
+				msg = (String) data;
 				System.out.printf( "%s: %s\n", nickName, msg);
 				ChatServer.broadcastMSG( nickName, msg);
 				

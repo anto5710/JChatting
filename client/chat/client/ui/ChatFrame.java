@@ -1,8 +1,10 @@
 package chat.client.ui;
 
-import static chat.util.Util.*;
+import static util.Util.*;
 
+import java.awt.Component;
 import java.awt.EventQueue;
+import java.awt.Point;
 
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
@@ -22,7 +24,15 @@ import chat.client.ServerDataListener;
 import chat.client.ServerHandler;
 
 import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Arrays;
+import javax.swing.JCheckBox;
+import javax.swing.JToggleButton;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 
 public class ChatFrame {
 
@@ -43,22 +53,25 @@ public class ChatFrame {
 	private JTextArea chatArea;
 	private ServerHandler connector;
 	private DataRenderer dataHandler;
+	private JTextArea senderList;
+	private JPanel prvMsgPanel;
+	private JPanel msgModePanel;
 
-//	/**
-//	 * Launch the application.
-//	 */
-//	public static void main(String[] args) {
-//		EventQueue.invokeLater(new Runnable() {
-//			public void run() {
-//				try {
-//					ChatFrame window = new ChatFrame(null);
-//					window.frame.setVisible(true);
-//				} catch (Exception e) {
-//					e.printStackTrace();
-//				}
-//			}
-//		});
-//	}
+	/**
+	 * Launch the application.
+	 */
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					ChatFrame window = new ChatFrame();
+					window.frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
 	
 	public void showFrame() {
 		frame.setVisible(true);
@@ -72,11 +85,11 @@ public class ChatFrame {
 	/**
 	 * Create the application.
 	 */
-	public ChatFrame(ServerHandler client) {
+	public ChatFrame() {
 		initialize();
-		this.connector = client;
+//		this.connector = client;
 		this.dataHandler = new DataRenderer();
-		this.connector.addListener(dataHandler);
+//		this.connector.addListener(dataHandler);
 	}
 
 	/**
@@ -84,7 +97,7 @@ public class ChatFrame {
 	 */
 	private void initialize() {
 		frame = new JFrame();
-		frame.setBounds(100, 100, 450, 300);
+		frame.setBounds(100, 100, 593, 422);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		JSplitPane splitPane = new JSplitPane();
@@ -101,21 +114,50 @@ public class ChatFrame {
 		chatArea = new JTextArea();
 		chatScroll.setViewportView(chatArea);
 		
-		JPanel panel = new JPanel();
-		splitPane_1.setRightComponent(panel);
-		panel.setLayout(new BorderLayout(0, 0));
+		JPanel inputpanel = new JPanel();
+		splitPane_1.setRightComponent(inputpanel);
+		inputpanel.setLayout(new BorderLayout(0, 0));
 		
 		JScrollPane inputScroll = new JScrollPane();
-		panel.add(inputScroll, BorderLayout.CENTER);
+		inputpanel.add(inputScroll, BorderLayout.CENTER);
 		
 		inputArea = new JTextArea();
 		inputScroll.setViewportView(inputArea);
+		
+		senderList = new JTextArea("전체");
+		
+		
 		
 		JButton sendBtn = new JButton("SEND");
 		sendBtn.addActionListener((e)->{
 			if(!inputArea.getText().isEmpty()) sendText();
 		});
-		panel.add(sendBtn, BorderLayout.EAST);
+		inputpanel.add(sendBtn, BorderLayout.EAST);
+		
+		msgModePanel = new JPanel();
+		inputpanel.add(msgModePanel, BorderLayout.SOUTH);
+		msgModePanel.setLayout(new BorderLayout(0, 0));
+		
+		JCheckBox checkBox = new JCheckBox("비밀전송");
+		checkBox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if ( checkBox.isSelected()) {
+					showPrivePanel();
+				} else {
+					hidePrivPanel();
+				}
+			}
+		});
+		msgModePanel.add(checkBox, BorderLayout.SOUTH);
+		
+		prvMsgPanel = new JPanel();
+		msgModePanel.add(prvMsgPanel, BorderLayout.CENTER);
+		
+		JToggleButton tglbtnAa = new JToggleButton("AA");
+		prvMsgPanel.add(tglbtnAa);
+		
+		JToggleButton tglbtnBb = new JToggleButton("BB");
+		prvMsgPanel.add(tglbtnBb);
 		
 		JScrollPane scrollPane = new JScrollPane();
 		splitPane.setLeftComponent(scrollPane);
@@ -140,7 +182,20 @@ public class ChatFrame {
 		panel_2.add(btnLogout);
 	}
 	
+	protected void hidePrivPanel() {
+		msgModePanel.remove(prvMsgPanel);
+		msgModePanel.revalidate();
+		
+	}
+
+	protected void showPrivePanel() {
+//		frame.getContentPane().set
+		msgModePanel.add(prvMsgPanel, BorderLayout.CENTER);
+		msgModePanel.revalidate();
+	}
+
 	private void sendText(){
+		
 		String text = inputArea.getText();
 		tryDoing(()->{LoginDialog.client.sendPublicMSG(text);});
 		inputArea.setText("");
@@ -211,5 +266,10 @@ public class ChatFrame {
 				Logger.log("what is this? " + cmd);
 			}
 		}
+	}
+
+	public void sethandler(ServerHandler handler) {
+		this.connector = handler;
+		this.connector.addListener(this.dataHandler);
 	}
 }

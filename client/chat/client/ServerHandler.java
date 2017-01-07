@@ -10,13 +10,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import util.Logger;
+import util.Util;
 import chat.client.protocol.ChatterList;
+import chat.client.protocol.PrivateMessage;
 import chat.protocol.IProtocol;
 import chat.protocol.Login;
 import chat.protocol.Logout;
 import chat.protocol.PublicMessage;
 import chat.protocol.UnknownCommandException;
-import chat.util.Util;
 
 /**
  * 서버에서 전달되는 메시지를 처리합니다.
@@ -38,6 +40,7 @@ public class ServerHandler implements Runnable{
 	private List<ServerDataListener> listeners = new ArrayList<>();
 	
 	public void addListener ( ServerDataListener listener) {
+		Logger.log("registering listenr : " + listener);
 		this.listeners.add(listener);
 	}
 	
@@ -68,11 +71,11 @@ public class ServerHandler implements Runnable{
 		t = new Thread(this);
 		t.setName("T-SH");
 		t.start();
-		sendLogin(nickName);
+//		sendLogin(nickName);
 		
 	}
 	
-	private void sendLogin(String nickName) throws IOException {
+	public void sendLogin(String nickName) throws IOException {
 		System.out.println("[" + Thread.currentThread().getName() + "]sending login name " + nickName);
 		protocolMap.get("LOGIN").write(dos, nickName);
 		t.setName("T-" + nickName);
@@ -109,6 +112,8 @@ public class ServerHandler implements Runnable{
 	}
 	
 	private void notifyResponse(String cmd, Object data) {
+		Logger.log(" at notifyResponse : " + cmd + ", " + data);
+		Logger.log("num of listeners "  + listeners.size());
 		listeners.forEach(listner->listner.onDataReceived(cmd, data));
 	}
 	
@@ -124,8 +129,12 @@ public class ServerHandler implements Runnable{
 	 * 
 	 * 
 	 */
-	public void sendPrivateMSG(String msg) {
-//		protocolMap.get("PRV_MSG").write(dos, IP);
+	public void sendPrivateMSG(String msg, String []nickNames) throws IOException {
+		String [] datas = new String [ nickNames.length + 1] ;
+		datas[0] = msg;
+		System.arraycopy(nickNames, 0, datas, 1, nickNames.length);
+		
+		protocolMap.get("PRV_MSG").write(dos, datas);
 	}
 	
 	public void sendLogout() throws IOException{ 

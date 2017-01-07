@@ -10,14 +10,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-
+import util.Util;
 import chat.client.protocol.ChatterList;
 import chat.protocol.IProtocol;
 import chat.protocol.Login;
 import chat.protocol.Logout;
 import chat.protocol.PublicMessage;
 import chat.protocol.UnknownCommandException;
-import chat.util.Util;
 
 /**
  * 특정 클라이언트가 보낸 메세지를 처리합니다.

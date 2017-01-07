@@ -6,6 +6,8 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import chat.client.ui.LoginDialog;
 /**
  *  172.30.1.39:3076
  *  
@@ -126,6 +128,8 @@ public class ChatServer {
 		@Override
 		public void handleData(ClientHandler client, String cmd, Object data) {
 			switch ( cmd ) {
+			case "PRV_MSG" :
+				break;
 			case "MSG" :
 				String nickName = client.getNickname();
 				String msg = (String) data;

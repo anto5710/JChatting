@@ -17,6 +17,7 @@ import javax.swing.JPanel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 
+import util.Logger;
 import chat.client.ServerDataListener;
 import chat.client.ServerHandler;
 
@@ -141,7 +142,7 @@ public class ChatFrame {
 	
 	private void sendText(){
 		String text = inputArea.getText();
-		tryDoing(()->{LoginDialog.client.sendMessage(text);});
+		tryDoing(()->{LoginDialog.client.sendPublicMSG(text);});
 		inputArea.setText("");
 	}
 	
@@ -181,13 +182,15 @@ public class ChatFrame {
 		
 		@Override
 		public void onDataReceived(String cmd, Object data) {
+			Logger.log(" handler : " + cmd + " and " + data);
 			switch (cmd) {
 			case "MSG":
 				String msg = convertPublicMSG((String)data);
 				INSTANCE.printMessage(msg);
 				break;
 				
-			case "CHATTER_LIST":	
+			case "CHATTER_LIST":
+				System.out.println("대화 참여자들 : " + Arrays.asList((String[])data));
 				INSTANCE.updateChatterList((String[]) data);
 				break;
 				
@@ -204,6 +207,8 @@ public class ChatFrame {
 				INSTANCE.removeNickName(nickNam);
 				INSTANCE.printMessage(nickNam+" logout");
 				break;
+			default : 
+				Logger.log("what is this? " + cmd);
 			}
 		}
 	}

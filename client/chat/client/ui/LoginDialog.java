@@ -1,10 +1,10 @@
 package chat.client.ui;
 
 import java.awt.BorderLayout;
-
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
 
+import javax.management.InstanceAlreadyExistsException;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
@@ -42,7 +42,6 @@ public class LoginDialog extends JDialog {
 	public static void main(String[] args) {
 		try {
 			LoginDialog dialog = new LoginDialog();
-			dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			dialog.setVisible(true);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -53,6 +52,7 @@ public class LoginDialog extends JDialog {
 	 * Create the dialog.
 	 */
 	public LoginDialog() {
+		setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -163,6 +163,7 @@ public class LoginDialog extends JDialog {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
+					
 					ChatFrame.INSTANCE = new ChatFrame(client);
 					ChatFrame.INSTANCE.showFrame();
 				} catch (Exception e) {

@@ -65,22 +65,30 @@ public class ServerHandler implements Runnable{
 		
 		dis = new DataInputStream(SERVER.getInputStream());
 		dos = new DataOutputStream(SERVER.getOutputStream());
-		sendLogin(nickName);
-		
 		t = new Thread(this);
 		t.setName("T-SH");
 		t.start();
+		sendLogin(nickName);
+		
 	}
 	
 	private void sendLogin(String nickName) throws IOException {
+		System.out.println("[" + Thread.currentThread().getName() + "]sending login name " + nickName);
 		protocolMap.get("LOGIN").write(dos, nickName);
+		t.setName("T-" + nickName);
+		System.out.println("[" + Thread.currentThread().getName() + "sent nickname");
 	}
 	
 	@Override
 	public void run(){
+		System.out.println("[" + Thread.currentThread().getName() + "] starting server handler");
 		while ( running ) {
 			try {
+				
+				System.out.println("[" + Thread.currentThread().getName() + "] waiting from server .." );
 				String cmd = dis.readUTF();
+				System.out.println("[" + Thread.currentThread().getName() + "] comd from server : " + cmd);
+				
 				/* TODO 이와 같이 프로토콜 해석 구현체를 따로 분리해서 사용합니다. */
 				IProtocol protocol = protocolMap.get(cmd);
 				if ( protocol != null ) {
@@ -104,8 +112,20 @@ public class ServerHandler implements Runnable{
 		listeners.forEach(listner->listner.onDataReceived(cmd, data));
 	}
 	
-	public void sendMessage(String msg) throws IOException {
+	public void sendPublicMSG(String msg) throws IOException {
 		protocolMap.get("MSG").write(dos, NICKNAME+": "+msg);
+	}
+	
+	/*
+	 * 
+	 * 
+	 * ab,c
+	 * 
+	 * 
+	 * 
+	 */
+	public void sendPrivateMSG(String msg) {
+//		protocolMap.get("PRV_MSG").write(dos, IP);
 	}
 	
 	public void sendLogout() throws IOException{ 

@@ -138,8 +138,15 @@ public class ChatFrame {
 		inputpanel.add(msgModePanel, BorderLayout.SOUTH);
 		msgModePanel.setLayout(new BorderLayout(0, 0));
 		
+		
+		prvMsgPanel = new JPanel();
+		msgModePanel.add(prvMsgPanel, BorderLayout.CENTER);
+		
 		JCheckBox checkBox = new JCheckBox("비밀전송");
+		msgModePanel.add(checkBox, BorderLayout.SOUTH);
 		checkBox.addActionListener(new ActionListener() {
+			{ hidePrivPanel(); }
+			
 			public void actionPerformed(ActionEvent e) {
 				if ( checkBox.isSelected()) {
 					showPrivePanel();
@@ -148,11 +155,6 @@ public class ChatFrame {
 				}
 			}
 		});
-		msgModePanel.add(checkBox, BorderLayout.SOUTH);
-		
-		prvMsgPanel = new JPanel();
-		msgModePanel.add(prvMsgPanel, BorderLayout.CENTER);
-		
 		JToggleButton tglbtnAa = new JToggleButton("AA");
 		prvMsgPanel.add(tglbtnAa);
 		
@@ -185,7 +187,6 @@ public class ChatFrame {
 	protected void hidePrivPanel() {
 		msgModePanel.remove(prvMsgPanel);
 		msgModePanel.revalidate();
-		
 	}
 
 	protected void showPrivePanel() {

@@ -50,7 +50,7 @@ public class ServerHandler implements Runnable{
 
 	private Map<String, IProtocol> protocolMap =new HashMap<String, IProtocol>();
 	{
-		registerProtocols(PublicMessage.class, Login.class, Logout.class, ChatterList.class);
+		registerProtocols(PublicMessage.class, Login.class, Logout.class, ChatterList.class, PrivateMessage.class);
 	}
 	
 	private void registerProtocols(Class <? extends IProtocol>...classes) {
@@ -72,7 +72,6 @@ public class ServerHandler implements Runnable{
 		t.setName("T-SH");
 		t.start();
 //		sendLogin(nickName);
-		
 	}
 	
 	public void sendLogin(String nickName) throws IOException {
@@ -95,7 +94,7 @@ public class ServerHandler implements Runnable{
 				/* TODO 이와 같이 프로토콜 해석 구현체를 따로 분리해서 사용합니다. */
 				IProtocol protocol = protocolMap.get(cmd);
 				if ( protocol != null ) {
-					Object data = protocol.read(dis); // String []
+					Object [] data = protocol.read(dis); // String []
 					notifyResponse(cmd, data);
 					
 				} else throw new UnknownCommandException("invalid CMD? " + cmd );
@@ -111,14 +110,16 @@ public class ServerHandler implements Runnable{
 		});
 	}
 	
-	private void notifyResponse(String cmd, Object data) {
+	private void notifyResponse(String cmd, Object...data) {
 		Logger.log(" at notifyResponse : " + cmd + ", " + data);
 		Logger.log("num of listeners "  + listeners.size());
 		listeners.forEach(listner->listner.onDataReceived(cmd, data));
 	}
 	
 	public void sendPublicMSG(String msg) throws IOException {
-		protocolMap.get("MSG").write(dos, NICKNAME+": "+msg);
+		// [msg, a, b, c]
+		// ["xxxx:msg"]
+		protocolMap.get("MSG").write(dos, NICKNAME, msg);
 	}
 	
 	/*
@@ -130,11 +131,7 @@ public class ServerHandler implements Runnable{
 	 * 
 	 */
 	public void sendPrivateMSG(String msg, String []nickNames) throws IOException {
-		String [] datas = new String [ nickNames.length + 1] ;
-		datas[0] = msg;
-		System.arraycopy(nickNames, 0, datas, 1, nickNames.length);
-		
-		protocolMap.get("PRV_MSG").write(dos, datas);
+		protocolMap.get("PRV_MSG").write(dos, msg, nickNames);
 	}
 	
 	public void sendLogout() throws IOException{ 

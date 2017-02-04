@@ -183,7 +183,7 @@ public class LoginDialog extends JDialog {
 		try {
 			port = Integer.parseInt(portField.getText());
 			client = new ServerHandler(IP, port, nickName);
-			frame.sethandler ( client );
+			frame.setHandler(client);
 			client.sendLogin(nickName);
 			return true;
 		} catch (Exception e) {

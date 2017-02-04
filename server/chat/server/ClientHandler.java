@@ -5,13 +5,16 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import util.Logger;
 import util.Util;
 import chat.client.protocol.ChatterList;
+import chat.client.protocol.PrivateMessage;
 import chat.protocol.IProtocol;
 import chat.protocol.Login;
 import chat.protocol.Logout;
@@ -33,7 +36,7 @@ public class ClientHandler implements Runnable {
 	private Map<String, IProtocol> protocolMap = new HashMap<String, IProtocol>();
 	{
 		try {
-			registerProtocols(PublicMessage.class,ChatterList.class,Login.class, Logout.class);
+			registerProtocols(PublicMessage.class,ChatterList.class,Login.class, Logout.class, PrivateMessage.class);
 		} catch (Exception e) {
 			throw new RuntimeException("Error while registering protocols");
 		}
@@ -69,8 +72,12 @@ public class ClientHandler implements Runnable {
 		try {
 			// read nickname
 			String cmd = dis.readUTF(); // "LOGIN"
+			Logger.log(cmd);
 			if( "LOGIN".equals(cmd) ) {
+				int len = dis.readInt(); // size =1
+				Logger.log("len: " + len);
 				this.nickName = dis.readUTF();
+				Logger.log("len: " + this.nickName);
 				
 				if(!t.isAlive()){
 					t.setName("T-" + this.nickName);
@@ -91,13 +98,13 @@ public class ClientHandler implements Runnable {
 	public void run() {
 		while ( running ) {
 			try {
-				String cmd = dis.readUTF(); // MSG, LOGOUT
+				String cmd = dis.readUTF(); // MSG, LOGOUT, PRV_MSG
 				IProtocol protocol = protocolMap.get(cmd);
 				if ( protocol != null) {
-					Object data = protocol.read(dis);
+					Object[] data = protocol.read(dis); // msg, [a, b, c]
 					notifyNewData (cmd, data );					
 				} else {
-					throw new UnknownCommandException("invalid CMD? " + cmd );
+					throw new UnknownCommandException("invalid CMD? " + "["+cmd+"]" );
 				}
 				
 			} catch (IOException e) {
@@ -113,7 +120,7 @@ public class ClientHandler implements Runnable {
 		ChatServer.unregisterClient(this);
 	}	
 		
-	private void notifyNewData(String cmd, Object data) {
+	private void notifyNewData(String cmd, Object...data) {
 		for (CommandHandler ch : handlers) {
 			ch.handleData(this, cmd, data);
 		}
@@ -121,6 +128,11 @@ public class ClientHandler implements Runnable {
 	
 	public void sendChatterList (String[]nickNames) throws IOException{
 		protocolMap.get("CHATTER_LIST").write(dos, nickNames);
+	}
+	
+	public void sendPrvMSG(String msg, String sender) throws IOException{
+		protocolMap.get("PRV_MSG").write(dos, msg, sender);
+		
 	}
 	
 	public void sendMessage (String msg ) throws IOException{

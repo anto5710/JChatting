@@ -2,9 +2,8 @@ package chat.client.ui;
 
 import static util.Util.*;
 
-import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.Point;
 
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
@@ -20,19 +19,21 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 
 import util.Logger;
+import util.Util;
 import chat.client.ServerDataListener;
 import chat.client.ServerHandler;
+import chat.client.ui.component.BadgePanel;
 
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import javax.swing.JCheckBox;
-import javax.swing.JToggleButton;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
 
 public class ChatFrame {
 
@@ -56,6 +57,10 @@ public class ChatFrame {
 	private JTextArea senderList;
 	private JPanel prvMsgPanel;
 	private JPanel msgModePanel;
+	private BadgePanel badgePanel;
+	private JTextArea badgeArea;
+	private JCheckBox prvCheckBox;
+	private JButton sendBtn;
 
 	/**
 	 * Launch the application.
@@ -87,9 +92,7 @@ public class ChatFrame {
 	 */
 	public ChatFrame() {
 		initialize();
-//		this.connector = client;
 		this.dataHandler = new DataRenderer();
-//		this.connector.addListener(dataHandler);
 	}
 
 	/**
@@ -123,12 +126,18 @@ public class ChatFrame {
 		
 		inputArea = new JTextArea();
 		inputScroll.setViewportView(inputArea);
+		inputArea.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				enableSendBtn();
+			}
+		});
+		
 		
 		senderList = new JTextArea("전체");
 		
-		
-		
-		JButton sendBtn = new JButton("SEND");
+		sendBtn = new JButton("SEND");
+		enableSendBtn();
 		sendBtn.addActionListener((e)->{
 			if(!inputArea.getText().isEmpty()) sendText();
 		});
@@ -142,24 +151,25 @@ public class ChatFrame {
 		prvMsgPanel = new JPanel();
 		msgModePanel.add(prvMsgPanel, BorderLayout.CENTER);
 		
-		JCheckBox checkBox = new JCheckBox("비밀전송");
-		msgModePanel.add(checkBox, BorderLayout.SOUTH);
-		checkBox.addActionListener(new ActionListener() {
+		prvCheckBox = new JCheckBox("비밀전송");
+		msgModePanel.add(prvCheckBox, BorderLayout.SOUTH);
+		prvCheckBox.addActionListener(new ActionListener() {
 			{ hidePrivPanel(); }
 			
 			public void actionPerformed(ActionEvent e) {
-				if ( checkBox.isSelected()) {
+				if ( prvCheckBox.isSelected()) {
 					showPrivePanel();
 				} else {
 					hidePrivPanel();
 				}
 			}
 		});
-		JToggleButton tglbtnAa = new JToggleButton("AA");
-		prvMsgPanel.add(tglbtnAa);
-		
-		JToggleButton tglbtnBb = new JToggleButton("BB");
-		prvMsgPanel.add(tglbtnBb);
+		badgePanel = new BadgePanel();
+		badgeArea = new JTextArea();
+		badgeArea.setPreferredSize(new Dimension(200, 20));
+		badgeArea.addKeyListener(new KeyTypeListener());	
+		prvMsgPanel.add(badgePanel);
+		prvMsgPanel.add(badgeArea);
 		
 		JScrollPane scrollPane = new JScrollPane();
 		splitPane.setLeftComponent(scrollPane);
@@ -196,11 +206,14 @@ public class ChatFrame {
 	}
 
 	private void sendText(){
-		
 		String text = inputArea.getText();
-		tryDoing(()->{LoginDialog.client.sendPublicMSG(text);});
-		inputArea.setText("");
-	}
+		if(prvCheckBox.isSelected()){ // 비밀메시지일 경우
+			String [] names = Util.toArray(String.class, badgePanel.getSelectedChatters());
+			Util.tryDoing(()->connector.sendPrivateMSG(text, names));
+		}else{
+			Util.tryDoing(()->connector.sendPublicMSG(text));
+		}
+	}	
 	
 	private void processLogout(){
 		tryDoing(()->{LoginDialog.client.sendLogout();});
@@ -224,25 +237,57 @@ public class ChatFrame {
 		Arrays.stream(nickNames).forEach(chatterModel::addElement);
 	}
 	
+	public List<String> getNicknames (){
+		return Arrays.stream(chatterModel.toArray())
+		      .map(e-> (String) e).
+		      collect(Collectors.toList());
+	}
+	
+	public void handlePopup(){
+		String text = badgeArea.getText();
+		
+		if(text.isEmpty()){
+			badgePanel.hidePopup();
+		}else{
+			badgePanel.updatePopup(badgeArea.getText(), getNicknames());
+			badgePanel.showPopup(badgeArea);
+		}
+	}
+	
+	private class KeyTypeListener extends KeyAdapter {
+		@Override
+		public void keyReleased(KeyEvent e) {
+			if( e.getID() == KeyEvent.KEY_RELEASED ){
+				handlePopup();
+			}
+		}
+	}
+	
 	static class DataRenderer implements ServerDataListener {
 
-		private String convertPublicMSG(String input){
-			int l = input.indexOf(":");
-			if(l==-1) return ""; // can't find regex
-			
-			int length = input.length();
-			String sender = input.substring(0, l);
-			String msg = input.substring(l+1, length);
-			return String.format("%s: %s", sender, msg); 
-		}
-		
+//		private String convertPublicMSG(String input){
+//			int l = input.indexOf(":");
+//			if(l==-1) return ""; // can't find regex
+//			
+//			int length = input.length();
+//			String sender = input.substring(0, l);
+//			String msg = input.substring(l+1, length);
+//			return String.format("%s: %s", sender, msg); 
+//		}
+//		
 		@Override
-		public void onDataReceived(String cmd, Object data) {
+		public void onDataReceived(String cmd, Object...data) {
 			Logger.log(" handler : " + cmd + " and " + data);
 			switch (cmd) {
+			case "PRV_MSG":
+				String msg = (String)data[0];
+				String sender = (String) data[1];
+				INSTANCE.printMessage("[PRV_MSG] "+sender+": "+msg);
+				
 			case "MSG":
-				String msg = convertPublicMSG((String)data);
-				INSTANCE.printMessage(msg);
+				sender = (String)data[0];
+				msg = (String) data[1];
+				INSTANCE.printMessage(sender + msg);
 				break;
 				
 			case "CHATTER_LIST":
@@ -252,14 +297,14 @@ public class ChatFrame {
 				
 			case "LOGIN":
 				
-				String nickNam = (String)data;
+				String nickNam = (String)data[0];
 				INSTANCE.addNickName(nickNam);
 				INSTANCE.printMessage(nickNam+" login");
 				break;
 				
 			case "LOGOUT":
 				
-				nickNam = (String)data;
+				nickNam = (String)data[0];
 				INSTANCE.removeNickName(nickNam);
 				INSTANCE.printMessage(nickNam+" logout");
 				break;
@@ -269,8 +314,13 @@ public class ChatFrame {
 		}
 	}
 
-	public void sethandler(ServerHandler handler) {
+	public void setHandler(ServerHandler handler) {
 		this.connector = handler;
 		this.connector.addListener(this.dataHandler);
+	}
+
+	public void enableSendBtn() {
+		boolean hasMSG =  !inputArea.getText().isEmpty();
+		sendBtn.setEnabled(hasMSG);
 	}
 }

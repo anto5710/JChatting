@@ -8,7 +8,7 @@ public interface IProtocol {
 
 	public String getCommand();
 	
-	public void write ( DataOutputStream dos, Object data ) throws IOException;
+	public void write ( DataOutputStream dos, Object...data ) throws IOException;
 	
-	public Object read ( DataInputStream dis ) throws IOException;
+	public Object[] read ( DataInputStream dis ) throws IOException;
 }

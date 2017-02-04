@@ -3,6 +3,7 @@ package chat.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import util.Util;
 import chat.client.ui.LoginDialog;
 /**
  *  172.30.1.39:3076
@@ -40,7 +42,6 @@ public class ChatServer {
 			Socket client = serverSock.accept(); // blocking method
 			ClientHandler handler = new ClientHandler(client);
 			registerClient(handler);
-			
 		}
 		serverSock.close();
 	}
@@ -100,15 +101,17 @@ public class ChatServer {
 	public static Set<ClientHandler> getClients(){
 		return handlers.keySet();
 	}
+
+	public static void sendPrvMSG (String sender, String msg, Collection<String> receivers){
+		getClients().stream().
+					 filter(h->receivers.contains(h.getNickname())).
+				     forEach(h ->{
+			Util.tryDoing(() ->h.sendPrvMSG(msg, sender));
+		});
+	}
 	
-	public static void sendMSGto(String sender, String msg, Collection<ClientHandler>nickNames){
-		/*
-		List<ClientHandler>recivers = getClients().stream().
-						filter(handler->nickNames.contains(handler.getNickname())).
-						collect(Collectors.toList());
-		*/
-//		System.out.println("send to ###" + recivers.size() + " clients");
-		for(ClientHandler handler: nickNames){
+	public static void broadcastMSG (String sender, String msg ) {
+		for(ClientHandler handler: getClients()){
 			try {
 				handler.sendMessage(msg);
 			} catch (IOException e) {
@@ -116,10 +119,6 @@ public class ChatServer {
 				e.printStackTrace();
 			}
 		}
-	}
-	
-	public static void broadcastMSG (String sender, String msg ) {
-		sendMSGto(sender, msg, getClients());
 	}
 	
 	/* sun이라는 회사에서 만든 언어가 자바!
@@ -140,22 +139,16 @@ public class ChatServer {
 	static class DataHandle implements CommandHandler {
 	
 		@Override
-		public void handleData(ClientHandler client, String cmd, Object data) {
+		public void handleData(ClientHandler client, String cmd, Object [] data) {
 			switch ( cmd ) {
 			case "PRV_MSG" :
-				Map<String, Object> map = (Map) data;
-				String sender = client.getNickname();
-				String msg = (String) map.get("msg");
-				List<String> receiverNames = (List<String>) map.get("receivers");
-				List<ClientHandler> receivers = handlers.keySet().stream()
-						                                         .filter(h-> receiverNames.contains(h.getNickname()))
-						                                         .collect(Collectors.toList());
-				ChatServer.sendMSGto(sender, msg, receivers );
-				
+				String msg = (String) data[0];
+				String [] receivers = (String[]) data[1];
+				ChatServer.sendPrvMSG(client.getNickname(), msg, Arrays.asList(receivers));
 				break;
 			case "MSG" :
 				String nickName = client.getNickname();
-				msg = (String) data;
+				msg = (String) data[0];
 				System.out.printf( "%s: %s\n", nickName, msg);
 				ChatServer.broadcastMSG( nickName, msg);
 				

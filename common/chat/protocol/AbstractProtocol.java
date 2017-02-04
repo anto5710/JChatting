@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
+import javax.xml.crypto.Data;
+
 import util.Util;
 /**
  * 채팅 프로토콜 공통 구현체입니다.
@@ -29,31 +31,50 @@ import util.Util;
  *
  */
 public abstract class AbstractProtocol implements IProtocol {
-	@Override
-	public void write(DataOutputStream dos, Object data) throws IOException {
-		writeString(dos, (String) data);
+	
+	public void write(DataOutputStream dos, String str) throws IOException{
+		write ( dos, new Object[]{str} );
 	}
 	
 	@Override
-	public Object read(DataInputStream dis) throws IOException {
-		return dis.readUTF();
-	}
-	
-	protected void writeString(DataOutputStream dos, String data) throws IOException{
-		dos.writeUTF(getCommand());
-		dos.writeUTF(data);
-		dos.flush();
-	}
-	
-	protected void writeString(DataOutputStream dos, String...datas) throws IOException{
-		if(datas.length==1) writeString(dos, datas[0]);
-	
+	public void write(DataOutputStream dos, Object ... datas) throws IOException {
 		dos.writeUTF(getCommand());
 		dos.writeInt(datas.length);
 		
-		for(String data : datas){
+		for(String data : (String[]) datas){
 			dos.writeUTF(data);
 		}
 		dos.flush();
 	}
+	
+	@Override
+	public Object [] read(DataInputStream dis) throws IOException {
+		int len = dis.readInt();
+		
+		String [] data = new String[len];
+		for ( int i = 0; i < data.length; i++ ) {
+			data[i] = dis.readUTF();
+		}
+		return data;
+	}
+	
+//	protected void writeString(DataOutputStream dos, String...datas) throws IOException{
+//		dos.writeUTF(getCommand());
+//		for(String data : datas){
+//			dos.writeUTF(data);
+//		}
+//		dos.flush();
+//	}
+	
+//	protected void writeString(DataOutputStream dos, String...datas) throws IOException{
+// 		if(datas.length==1) writeString(dos, datas[0]);
+//	
+//		dos.writeUTF(getCommand());
+//		dos.writeInt(datas.length);
+//		
+//		for(String data : datas){
+//			dos.writeUTF(data);
+//		}
+//		dos.flush();
+//	}
 }

@@ -104,7 +104,7 @@ public class ChatServer {
 	public static void broadcastMSG (String sender, String msg ) {
 		for(ClientHandler handler: getClients()){
 			try {
-				handler.sendMessage(msg);
+				handler.sendPublicMSG(sender, msg);
 			} catch (IOException e) {
 				cleaner.registerDeadClient(handler);
 				e.printStackTrace();
@@ -114,6 +114,7 @@ public class ChatServer {
 	
 	static class DataHandle implements CommandHandler {
 	
+		@SuppressWarnings("unchecked")
 		@Override
 		public void handleData(ClientHandler client, String cmd, Object data) {
 			switch ( cmd ) {
@@ -123,11 +124,12 @@ public class ChatServer {
 				String msg = (String) map.get("msg");
 				String [] names = (String[]) map.get("names");
 				
-				ChatServer.sendPrvMSG(client.getNickname(), msg, names);
+				ChatServer.sendPrvMSG(sender, msg, names);
 				break;
 			case "MSG" :
-				String name = client.getNickname();
-				msg = (String) data;
+				map = (Map<String, Object>)data;
+				String name = (String) map.get("sender");
+				msg = (String) map.get("msg");
 				System.out.printf( "%s: %s\n", name, msg);
 				ChatServer.broadcastMSG( name, msg);
 				

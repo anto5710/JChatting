@@ -114,7 +114,7 @@ public class ServerHandler implements Runnable{
 	}
 	
 	private void notifyResponse(String cmd, Object data) {
-		Logger.log(" at notifyResponse : " + cmd + ", " + data);
+		Logger.log(" at notifyResponse : " + cmd + ", " + data.toString());
 		Logger.log("num of listeners "  + listeners.size());
 		listeners.forEach(listner->listner.onDataReceived(cmd, data));
 	}

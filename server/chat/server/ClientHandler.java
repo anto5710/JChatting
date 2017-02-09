@@ -133,8 +133,8 @@ public class ClientHandler implements Runnable {
 		protocolMap.get("PRV_MSG").write(dos, sender, msg, receivers);
 	}
 	
-	public void sendMessage (String msg ) throws IOException{
-		protocolMap.get("MSG").write(dos, msg);
+	public void sendPublicMSG (String sender, String msg ) throws IOException{
+		protocolMap.get("MSG").write(dos, sender, msg);
 		System.out.println("sent to " + this.nickName + " => " + msg);
 	}
 

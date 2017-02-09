@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import javax.xml.crypto.Data;
 
+import util.Logger;
 import util.Util;
 /**
  * 채팅 프로토콜 공통 구현체입니다.
@@ -57,6 +58,8 @@ public abstract class AbstractProtocol implements IProtocol {
 		for(int i=0;i<len;i++){
 			datas[i] = dis.readUTF();
 		}
+		
+		Logger.logR(getCommand(), datas);
 		return datas;
 	}
 
@@ -72,6 +75,7 @@ public abstract class AbstractProtocol implements IProtocol {
 		for(int i = 0 ; i < len; i ++ ) {
 			dos.writeUTF(objs[i].toString());
 		}
+		Logger.logW(cmd, objs);
 	}
 	/*
 	protected void writeStr(DataOutputStream dos, String...strs) throws IOException {

@@ -13,11 +13,11 @@ import java.util.Set;
 
 import util.Logger;
 import util.Util;
-import chat.client.protocol.ChatterList;
-import chat.client.protocol.PrivateMessage;
+import chat.protocol.ChatterList;
 import chat.protocol.IProtocol;
 import chat.protocol.Login;
 import chat.protocol.Logout;
+import chat.protocol.PrivateMessage;
 import chat.protocol.PublicMessage;
 import chat.protocol.UnknownCommandException;
 
@@ -36,7 +36,7 @@ public class ClientHandler implements Runnable {
 	private Map<String, IProtocol> protocolMap = new HashMap<String, IProtocol>();
 	{
 		try {
-			registerProtocols(PublicMessage.class,ChatterList.class,Login.class, Logout.class, PrivateMessage.class);
+			registerProtocols(PublicMessage.class, ChatterList.class, Login.class, Logout.class, PrivateMessage.class);
 		} catch (Exception e) {
 			throw new RuntimeException("Error while registering protocols");
 		}
@@ -65,7 +65,7 @@ public class ClientHandler implements Runnable {
 		//init
 		dis = new DataInputStream(sock.getInputStream());
 		dos = new DataOutputStream(sock.getOutputStream());
-		t = new Thread( this );
+		t = new Thread(this);
 	}
 	
 	public void readNickName() {
@@ -74,21 +74,22 @@ public class ClientHandler implements Runnable {
 			String cmd = dis.readUTF(); // "LOGIN"
 			Logger.log(cmd);
 			if( "LOGIN".equals(cmd) ) {
-				int len = dis.readInt(); // size =1
-				Logger.log("len: " + len);
-				this.nickName = dis.readUTF();
-				Logger.log("len: " + this.nickName);
-				
-				if(!t.isAlive()){
-					t.setName("T-" + this.nickName);
-					t.start();
-				}
+				 Object name = protocolMap.get("LOGIN").read(dis);
+				 this.nickName = (String) name;
+				 start();
 			} else throw new ChatProtocolException ( "expected LOGIN but " + cmd );
 		} catch (IOException e1) {
 			throw new RuntimeException("fail to create stream");
 		}
 	}
 
+	private void start(){
+		if(!t.isAlive()){
+			t.setName("T-" + this.nickName);
+			t.start();
+		}
+	}
+	
 	public void stop(){
 		running = false;
 		this.t.interrupt();
@@ -100,16 +101,16 @@ public class ClientHandler implements Runnable {
 			try {
 				String cmd = dis.readUTF(); // MSG, LOGOUT, PRV_MSG
 				IProtocol protocol = protocolMap.get(cmd);
+				
 				if ( protocol != null) {
-					Object[] data = protocol.read(dis); // msg, [a, b, c]
-					notifyNewData (cmd, data );					
+					Object data = protocol.read(dis); // msg, [a, b, c]
+					notifyNewData ( cmd, data );					
 				} else {
 					throw new UnknownCommandException("invalid CMD? " + "["+cmd+"]" );
 				}
-				
 			} catch (IOException e) {
 				e.printStackTrace();
-				running = false;
+				stop();
 			} 
 		}
 		/**
@@ -117,22 +118,19 @@ public class ClientHandler implements Runnable {
 		 * ChatMain.handlers에서 현재 ClientHandler를 제거해야 합니다.
 		 * 원래는 아래처럼 제거하기 전에 다른 참여자들에게 로그아웃했다는 메세지를 보내줘야 합니다.
 		 */
-		ChatServer.unregisterClient(this);
+		ChatServer.unregisterClient(nickName);
 	}	
 		
-	private void notifyNewData(String cmd, Object...data) {
-		for (CommandHandler ch : handlers) {
-			ch.handleData(this, cmd, data);
-		}
+	private void notifyNewData(String cmd, Object data) {
+		handlers.forEach(ch->ch.handleData(this, cmd, data));
 	}
 	
 	public void sendChatterList (String[]nickNames) throws IOException{
 		protocolMap.get("CHATTER_LIST").write(dos, nickNames);
 	}
 	
-	public void sendPrvMSG(String msg, String sender) throws IOException{
-		protocolMap.get("PRV_MSG").write(dos, msg, sender);
-		
+	public void sendPrvMSG(String sender, String msg, String[] receivers) throws IOException{
+		protocolMap.get("PRV_MSG").write(dos, sender, msg, receivers);
 	}
 	
 	public void sendMessage (String msg ) throws IOException{

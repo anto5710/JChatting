@@ -23,6 +23,7 @@ import util.Util;
 import chat.client.ServerDataListener;
 import chat.client.ServerHandler;
 import chat.client.ui.component.BadgePanel;
+import chat.protocol.UnknownCommandException;
 
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
@@ -31,6 +32,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.swing.JCheckBox;
@@ -53,8 +55,6 @@ public class ChatFrame {
 	private JTextArea inputArea;
 	private JTextArea chatArea;
 	private ServerHandler connector;
-	private DataRenderer dataHandler;
-	private JTextArea senderList;
 	private JPanel prvMsgPanel;
 	private JPanel msgModePanel;
 	private BadgePanel badgePanel;
@@ -92,7 +92,6 @@ public class ChatFrame {
 	 */
 	public ChatFrame() {
 		initialize();
-		this.dataHandler = new DataRenderer();
 	}
 
 	/**
@@ -132,9 +131,6 @@ public class ChatFrame {
 				enableSendBtn();
 			}
 		});
-		
-		
-		senderList = new JTextArea("전체");
 		
 		sendBtn = new JButton("SEND");
 		enableSendBtn();
@@ -200,7 +196,6 @@ public class ChatFrame {
 	}
 
 	protected void showPrivePanel() {
-//		frame.getContentPane().set
 		msgModePanel.add(prvMsgPanel, BorderLayout.CENTER);
 		msgModePanel.revalidate();
 	}
@@ -216,12 +211,22 @@ public class ChatFrame {
 	}	
 	
 	private void processLogout(){
-		tryDoing(()->{LoginDialog.client.sendLogout();});
-		ChatFrame.INSTANCE.close();
+		tryDoing(()->LoginDialog.client.sendLogout());
+		INSTANCE.close();
 	}
 	
 	public void printMessage(String msg){
 		chatArea.append(msg+"\n");
+	}
+	
+	public void setHandler(ServerHandler handler) {
+		this.connector = handler;
+		this.connector.addListener(new DataRenderer());
+	}
+
+	public void enableSendBtn() {
+		boolean hasMSG =  !inputArea.getText().isEmpty();
+		sendBtn.setEnabled(hasMSG);
 	}
 	
 	public void addNickName(String nicknam){
@@ -243,7 +248,7 @@ public class ChatFrame {
 		      collect(Collectors.toList());
 	}
 	
-	public void handlePopup(){
+	private void handlePopup(){
 		String text = badgeArea.getText();
 		
 		if(text.isEmpty()){
@@ -263,64 +268,49 @@ public class ChatFrame {
 		}
 	}
 	
-	static class DataRenderer implements ServerDataListener {
+	public static class DataRenderer implements ServerDataListener {
 
-//		private String convertPublicMSG(String input){
-//			int l = input.indexOf(":");
-//			if(l==-1) return ""; // can't find regex
-//			
-//			int length = input.length();
-//			String sender = input.substring(0, l);
-//			String msg = input.substring(l+1, length);
-//			return String.format("%s: %s", sender, msg); 
-//		}
-//		
+		@SuppressWarnings("unchecked")
 		@Override
-		public void onDataReceived(String cmd, Object...data) {
+		public void onDataReceived(String cmd, Object data) {
 			Logger.log(" handler : " + cmd + " and " + data);
 			switch (cmd) {
 			case "PRV_MSG":
-				String msg = (String)data[0];
-				String sender = (String) data[1];
+				Map<String, Object> map = (Map<String, Object>)data;
+				String msg = (String) map.get("msg");
+				String sender = (String) map.get("sender");
 				INSTANCE.printMessage("[PRV_MSG] "+sender+": "+msg);
 				
-			case "MSG":
-				sender = (String)data[0];
-				msg = (String) data[1];
-				INSTANCE.printMessage(sender + msg);
 				break;
-				
+			case "MSG":
+				map = (Map<String, Object>)data;
+				msg = (String) map.get("msg");
+				sender = (String) map.get("sender");
+				INSTANCE.printMessage(sender + msg);
+
+				break;
 			case "CHATTER_LIST":
-				System.out.println("대화 참여자들 : " + Arrays.asList((String[])data));
-				INSTANCE.updateChatterList((String[]) data);
+				String [] names = (String[]) data;
+				System.out.println("대화 참여자들 : " + names.toString());
+				INSTANCE.updateChatterList(names);
 				break;
 				
 			case "LOGIN":
 				
-				String nickNam = (String)data[0];
+				String nickNam = (String)data;
 				INSTANCE.addNickName(nickNam);
 				INSTANCE.printMessage(nickNam+" login");
 				break;
 				
 			case "LOGOUT":
 				
-				nickNam = (String)data[0];
+				nickNam = (String)data;
 				INSTANCE.removeNickName(nickNam);
 				INSTANCE.printMessage(nickNam+" logout");
 				break;
 			default : 
-				Logger.log("what is this? " + cmd);
+				new UnknownCommandException("unknown command: "+cmd);
 			}
 		}
-	}
-
-	public void setHandler(ServerHandler handler) {
-		this.connector = handler;
-		this.connector.addListener(this.dataHandler);
-	}
-
-	public void enableSendBtn() {
-		boolean hasMSG =  !inputArea.getText().isEmpty();
-		sendBtn.setEnabled(hasMSG);
 	}
 }

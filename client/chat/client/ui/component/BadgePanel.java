@@ -77,7 +77,7 @@ public class BadgePanel extends JPanel{
 		menu.revalidate();
 	}
 	
-	public void updatePopup( String text, List<String> values) {
+	public void updatePopup(String text, List<String> values) {
 		menu.removeAll();
 		List<String> toPut = values.stream().
 			filter(name->!selected.contains(name)).

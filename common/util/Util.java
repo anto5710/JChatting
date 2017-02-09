@@ -3,7 +3,10 @@ package util;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Util {
 	
@@ -48,12 +51,31 @@ public class Util {
 			throw new RuntimeException("fail to create instance", e);
 		}
 	}
+	/**
+	 * 
+	 * @param keys 쉼표로
+	 * @param ins
+	 * @return
+	 */
+	public static Map<String, Object> map(String ptn, Object...ins){
+		String [] keys = ptn.split(",");
+		if(ins.length!=keys.length) return null;
 
-	public static String string(DataInputStream in) {
-		try {
-			return  in.readUTF();
-		} catch (IOException e) {
-			throw new RuntimeException("fail to read string: ", e);
+		Map<String, Object> map = new HashMap<>();
+		
+		for(int i = 0; i< keys.length; i++){
+			map.put(keys[i].trim(), ins[i]);
 		}
+		return map;
 	}
+//	public static Map<String, Object> map(Object[]values, String...keys){
+//		if(values.length!=keys.length) return null;
+////		Map<String, Object> map = new HashMap<>();
+//		
+//		for(int i=0; i<keys.length; i++){
+//			map.put(keys[i], values[i]);
+//		}
+//		return map;
+//	}
+	
 }

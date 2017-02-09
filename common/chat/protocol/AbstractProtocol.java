@@ -4,7 +4,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.function.Consumer;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import javax.xml.crypto.Data;
 
@@ -32,49 +35,51 @@ import util.Util;
  */
 public abstract class AbstractProtocol implements IProtocol {
 	
-	public void write(DataOutputStream dos, String str) throws IOException{
-		write ( dos, new Object[]{str} );
+	/**
+	 * 
+	 * 위의건 String  전용
+	 * 
+	 * 다양한 파라미터, String 하나
+	 * 
+	 * 보내는 건 기본적으로 String list 혹은 String
+	 * 
+	 * 받는 건 맵/배열/ String
+	 * 
+	 */
+	
+	protected String readStr(DataInputStream dis) throws IOException {
+		return readStrs(dis)[0];
 	}
 	
-	@Override
-	public void write(DataOutputStream dos, Object ... datas) throws IOException {
-		dos.writeUTF(getCommand());
-		dos.writeInt(datas.length);
-		
-		for(String data : (String[]) datas){
-			dos.writeUTF(data);
+	protected String [] readStrs(DataInputStream dis) throws IOException {
+		int len = dis.readInt();		
+		String [] datas = new String [len];
+		for(int i=0;i<len;i++){
+			datas[i] = dis.readUTF();
 		}
+		return datas;
+	}
+
+	@Override
+	public abstract Object read(DataInputStream dis) throws IOException;
+	
+	@Override
+	public void write(DataOutputStream dos, Object... objs) throws IOException {
+		String cmd = getCommand();
+		int len = objs.length;
+		dos.writeUTF(cmd);
+		dos.writeInt(len);
+		for(int i = 0 ; i < len; i ++ ) {
+			dos.writeUTF(objs[i].toString());
+		}
+	}
+	/*
+	protected void writeStr(DataOutputStream dos, String...strs) throws IOException {
+		dos.writeUTF(getCommand());
+		dos.writeInt(strs.length);
+		
+		for(String str : strs) dos.writeUTF(str);
 		dos.flush();
 	}
-	
-	@Override
-	public Object [] read(DataInputStream dis) throws IOException {
-		int len = dis.readInt();
-		
-		String [] data = new String[len];
-		for ( int i = 0; i < data.length; i++ ) {
-			data[i] = dis.readUTF();
-		}
-		return data;
-	}
-	
-//	protected void writeString(DataOutputStream dos, String...datas) throws IOException{
-//		dos.writeUTF(getCommand());
-//		for(String data : datas){
-//			dos.writeUTF(data);
-//		}
-//		dos.flush();
-//	}
-	
-//	protected void writeString(DataOutputStream dos, String...datas) throws IOException{
-// 		if(datas.length==1) writeString(dos, datas[0]);
-//	
-//		dos.writeUTF(getCommand());
-//		dos.writeInt(datas.length);
-//		
-//		for(String data : datas){
-//			dos.writeUTF(data);
-//		}
-//		dos.flush();
-//	}
+	*/
 }

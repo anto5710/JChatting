@@ -12,11 +12,11 @@ import java.util.Map;
 
 import util.Logger;
 import util.Util;
-import chat.client.protocol.ChatterList;
-import chat.client.protocol.PrivateMessage;
+import chat.protocol.ChatterList;
 import chat.protocol.IProtocol;
 import chat.protocol.Login;
 import chat.protocol.Logout;
+import chat.protocol.PrivateMessage;
 import chat.protocol.PublicMessage;
 import chat.protocol.UnknownCommandException;
 
@@ -71,14 +71,17 @@ public class ServerHandler implements Runnable{
 		t = new Thread(this);
 		t.setName("T-SH");
 		t.start();
-//		sendLogin(nickName);
 	}
 	
 	public void sendLogin(String nickName) throws IOException {
 		System.out.println("[" + Thread.currentThread().getName() + "]sending login name " + nickName);
-		protocolMap.get("LOGIN").write(dos, nickName);
 		t.setName("T-" + nickName);
+		protocolMap.get("LOGIN").write(dos, new Object[]{nickName});
 		System.out.println("[" + Thread.currentThread().getName() + "sent nickname");
+	}
+	
+	public void sendLogout() throws IOException{ 
+		protocolMap.get("LOGOUT").write(dos);
 	}
 	
 	@Override
@@ -94,7 +97,7 @@ public class ServerHandler implements Runnable{
 				/* TODO 이와 같이 프로토콜 해석 구현체를 따로 분리해서 사용합니다. */
 				IProtocol protocol = protocolMap.get(cmd);
 				if ( protocol != null ) {
-					Object [] data = protocol.read(dis); // String []
+					Object data = protocol.read(dis); // String []
 					notifyResponse(cmd, data);
 					
 				} else throw new UnknownCommandException("invalid CMD? " + cmd );
@@ -110,32 +113,18 @@ public class ServerHandler implements Runnable{
 		});
 	}
 	
-	private void notifyResponse(String cmd, Object...data) {
+	private void notifyResponse(String cmd, Object data) {
 		Logger.log(" at notifyResponse : " + cmd + ", " + data);
 		Logger.log("num of listeners "  + listeners.size());
 		listeners.forEach(listner->listner.onDataReceived(cmd, data));
 	}
 	
 	public void sendPublicMSG(String msg) throws IOException {
-		// [msg, a, b, c]
-		// ["xxxx:msg"]
 		protocolMap.get("MSG").write(dos, NICKNAME, msg);
 	}
-	
-	/*
-	 * 
-	 * 
-	 * ab,c
-	 * 
-	 * 
-	 * 
-	 */
+
 	public void sendPrivateMSG(String msg, String []nickNames) throws IOException {
 		protocolMap.get("PRV_MSG").write(dos, msg, nickNames);
-	}
-	
-	public void sendLogout() throws IOException{ 
-		protocolMap.get("LOGOUT").write(dos, "");
 	}
 	
 	public String getIP() {

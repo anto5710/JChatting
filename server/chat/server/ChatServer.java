@@ -21,17 +21,20 @@ import chat.client.ui.LoginDialog;
  *     특정 기계마다 갖는 고유한 주소를 의미합니다.
  *     
  *  PORT 1 ~ 65535
- *  
+ *  서버 설정 파일 이름은 - server.config
+ *  key=value
+ *  key=value 
  */
 public class ChatServer {
 
 	private static Map<String, ClientHandler> handlers = new HashMap<>();
 	private static ClientCleaner cleaner ;
+	private static String CONFIG_FILE = "server.config";
 	
 	public static void main(String[] args) throws IOException {
 		cleaner = new ClientCleaner();
-		
-		ServerSocket serverSock = new ServerSocket( 8999 );
+		ChatConfig config = ChatConfig.readConfig(CONFIG_FILE);
+		ServerSocket serverSock = new ServerSocket( config.getPort() );
 		boolean running = true;
 		
 		while ( running ) {

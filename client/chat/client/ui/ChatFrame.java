@@ -286,7 +286,7 @@ public class ChatFrame {
 				map = (Map<String, Object>)data;
 				msg = (String) map.get("msg");
 				sender = (String) map.get("sender");
-				INSTANCE.printMessage(sender + msg);
+				INSTANCE.printMessage(sender +": "+ msg);
 
 				break;
 			case "CHATTER_LIST":

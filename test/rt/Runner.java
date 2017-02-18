@@ -1,12 +1,10 @@
 package rt;
 
-import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.print.attribute.standard.Severity;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -46,7 +44,7 @@ public class Runner {
 		frame.setVisible(true);
 	}
 	
-	static void destoryAll() {
+	public static void destoryAll() {
 		children.stream()
 		         .forEach(proc-> proc.destroy());
 		frame.removeAll();

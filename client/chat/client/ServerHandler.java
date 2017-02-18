@@ -124,7 +124,7 @@ public class ServerHandler implements Runnable{
 	}
 
 	public void sendPrivateMSG(String msg, String []nickNames) throws IOException {
-		protocolMap.get("PRV_MSG").write(dos, msg, nickNames);
+		protocolMap.get("PRV_MSG").write(dos, NICKNAME, msg, nickNames);
 	}
 	
 	public String getIP() {
